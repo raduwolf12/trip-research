@@ -1437,7 +1437,7 @@ document.getElementById('wx-btn').addEventListener('click',async function(){
     var data=await invoke('/weather?city='+encodeURIComponent(city)+(cc?'&countryCode='+cc:'')+(sd?'&startDate='+sd:'')+(ed?'&endDate='+ed:''),'GET');
     el.innerHTML='';
     if(data.error){el.innerHTML='<div class="status-text error">'+data.error+'</div>';return;}
-    if(data.note){var note=document.createElement('div');note.className='note-bar';note.textContent='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> '+data.note;el.appendChild(note);}
+    if(data.note){var note=document.createElement('div');note.className='note-bar';note.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> '+data.note;el.appendChild(note);}
     // Summary stats
     var days=data.days||[];
     if(days.length){
@@ -1502,7 +1502,7 @@ function renderDutyAllowances(){
     var items=document.createElement('div');items.className='allowance-items';
     [['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H7c-1.5 4-2 6-2 8a5 5 0 0 0 5 5z"/></svg> Alcohol',info.alcohol],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M18 12H2v4h16"/><path d="M22 12v4"/><path d="M7 12v4"/><path d="M18 8c0-2.5-2-2.5-2-5"/></svg> Tobacco',info.tobacco],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Goods value',info.goods],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Cash',info.cash]].forEach(function(pair){
       var row=document.createElement('div');row.className='a-row';
-      var l=document.createElement('div');l.className='a-lbl';l.textContent=pair[0];
+      var l=document.createElement('div');l.className='a-lbl';l.innerHTML=pair[0];
       var v=document.createElement('div');v.className='a-val';v.textContent=pair[1];
       row.appendChild(l);row.appendChild(v);items.appendChild(row);
     });
@@ -1614,7 +1614,7 @@ function renderAirlineDropdown(airlines, showDetectedFirst){
     }
     var opt=document.createElement('div');
     opt.style.cssText='padding:7px 10px;font-size:12.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
-    opt.addEventListener('mouseover',function(){this.style.background='#f3f4f6';});
+    opt.addEventListener('mouseover',function(){this.style.background='var(--bg-hover)';});
     opt.addEventListener('mouseout',function(){this.style.background='';});
     var name=document.createElement('span');name.textContent=a.name;
     var meta=document.createElement('span');meta.style.cssText='font-size:10px;color:var(--text-faint);';
