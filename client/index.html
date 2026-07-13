@@ -1,0 +1,1794 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Trip Research</title>
+  <style>/* TREK plugin design kit — token-driven, matches the host in light + dark. */
+:root {
+  color-scheme: light;
+  /* Live tokens (the host overrides these per theme/accent via the bridge). */
+  --bg-primary: #ffffff; --bg-secondary: #f8fafc; --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff; --bg-input: #ffffff; --bg-hover: rgba(0,0,0,.03); --bg-selected: #e2e8f0;
+  --text-primary: #111827; --text-secondary: #374151; --text-muted: #6b7280; --text-faint: #9ca3af;
+  --border-primary: #e5e7eb; --border-secondary: #f3f4f6; --border-faint: rgba(0,0,0,.06);
+  --accent: #111827; --accent-text: #ffffff; --accent-hover: #1f2937; --accent-subtle: #f1f5f9;
+  --success: #16a34a; --success-soft: #dcfce7; --danger: #dc2626; --danger-soft: #fef2f2;
+  --warning: #d97706; --warning-soft: #fffbeb; --info: #2563eb; --info-soft: #eff6ff;
+  --shadow-card: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05); --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px;
+  --font-system: 'Poppins', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  /* Baked glass layer (mirrors the host's .trek-dash; not sent over the bridge). */
+  --glass-bg: linear-gradient(135deg, oklch(1 0 0 / .72) 0%, oklch(0.99 0.006 75 / .5) 100%);
+  --glass-border: oklch(0.88 0.008 70 / .7);
+  --glass-shadow: 0 1px 2px oklch(0.4 0.02 60 / .05), 0 12px 32px -14px oklch(0.3 0.02 60 / .2);
+  --glass-shadow-hover: 0 2px 6px oklch(0.4 0.02 60 / .07), 0 26px 56px -20px oklch(0.25 0.04 60 / .32);
+  --glass-highlight: inset 0 1px 0 oklch(1 0 0 / .8);
+  --glass-blur: blur(22px) saturate(1.7);
+  --r-sm: 14px; --r-md: 18px; --r-lg: 22px; --r-xl: 28px;
+  /* The house easings: a punchy card curve and TREK's ease-out-quint. */
+  --trek-ease: cubic-bezier(.2,.7,.2,1);
+  --trek-ease-quint: cubic-bezier(.23,1,.32,1);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-primary: #121215; --bg-secondary: #1a1a1e; --bg-tertiary: #1c1c21;
+  --bg-card: #131316; --bg-input: #1c1c21; --bg-hover: rgba(255,255,255,.06); --bg-selected: rgba(255,255,255,.1);
+  --text-primary: #f4f4f5; --text-secondary: #d4d4d8; --text-muted: #a1a1aa; --text-faint: #71717a;
+  --border-primary: #27272a; --border-secondary: #1c1c21; --border-faint: rgba(255,255,255,.07);
+  --accent: #e4e4e7; --accent-text: #09090b; --accent-hover: #d4d4d8; --accent-subtle: rgba(255,255,255,.08);
+  --success: #22c55e; --success-soft: rgba(34,197,94,.15); --danger: #ef4444; --danger-soft: rgba(239,68,68,.15);
+  --warning: #f59e0b; --warning-soft: rgba(245,158,11,.15); --info: #3b82f6; --info-soft: rgba(59,130,246,.15);
+  --shadow-card: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.3); --shadow-md: 0 4px 12px rgba(0,0,0,.4);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.5);
+  --glass-bg: linear-gradient(135deg, oklch(0.31 0 0 / .58) 0%, oklch(0.25 0 0 / .42) 100%);
+  --glass-border: oklch(1 0 0 / .1);
+  --glass-shadow: 0 1px 2px oklch(0 0 0 / .3), 0 12px 32px -14px oklch(0 0 0 / .55);
+  --glass-shadow-hover: 0 2px 6px oklch(0 0 0 / .4), 0 26px 56px -20px oklch(0 0 0 / .72);
+  --glass-highlight: inset 0 1px 0 oklch(1 0 0 / .09);
+}
+
+/* Base: a light reset + native type. The bootstrap adds `trek-ui` to <body>. */
+*, *::before, *::after { box-sizing: border-box; }
+body.trek-ui {
+  margin: 0;
+  font-family: var(--font-system);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.trek-ui :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* Cards + panels ----------------------------------------------------------- */
+.trek-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+.trek-glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--glass-shadow), var(--glass-highlight);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  padding: 24px 26px;
+}
+/* Add to a card/glass to make it lift on hover, like a native tool tile. */
+.trek-interactive {
+  transition: transform .3s var(--trek-ease), box-shadow .3s, border-color .3s;
+  cursor: pointer;
+}
+.trek-glass.trek-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow-hover), var(--glass-highlight);
+}
+.trek-card.trek-interactive:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.trek-interactive:active { transform: translateY(0); }
+
+/* Buttons ------------------------------------------------------------------ */
+.trek-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: 12px;
+  font: inherit; font-size: 14px; font-weight: 500; line-height: 1;
+  border: 1px solid transparent; cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: transform .08s var(--trek-ease-quint), background .15s, box-shadow .15s, border-color .15s, color .15s;
+}
+.trek-btn:active { transform: scale(.97); }
+.trek-btn:disabled { opacity: .5; cursor: not-allowed; }
+.trek-btn--primary { background: var(--accent); color: var(--accent-text); box-shadow: var(--shadow-sm); }
+.trek-btn--primary:hover:not(:disabled) { background: var(--accent-hover); }
+.trek-btn--secondary { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-primary); box-shadow: var(--shadow-sm); }
+.trek-btn--secondary:hover:not(:disabled) { background: var(--bg-hover); }
+.trek-btn--ghost { background: transparent; color: var(--text-secondary); }
+.trek-btn--ghost:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+.trek-btn--danger { background: var(--danger); color: #fff; }
+.trek-btn--danger:hover:not(:disabled) { filter: brightness(1.05); }
+
+/* Form controls ------------------------------------------------------------ */
+.trek-input, .trek-textarea, .trek-select {
+  width: 100%; box-sizing: border-box;
+  padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--border-primary); background: var(--bg-input); color: var(--text-primary);
+  font: inherit; font-size: 13px; outline: none;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.trek-textarea { resize: vertical; min-height: 72px; }
+.trek-input::placeholder, .trek-textarea::placeholder { color: var(--text-faint); }
+.trek-input:focus, .trek-textarea:focus, .trek-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 22%, transparent);
+}
+.trek-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+
+/* Enhanced select — the kit upgrades a native <select> into this listbox so the
+   dropdown matches the host (a native popup is drawn by the OS and can't be
+   themed). The real <select> stays in the DOM as the value source. */
+.trek-select-wrap { position: relative; }
+.trek-select-native-hidden {
+  position: absolute !important; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0;
+}
+.trek-select-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  text-align: start; cursor: pointer;
+}
+.trek-select-trigger:disabled { opacity: .5; cursor: not-allowed; }
+.trek-select-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 22%, transparent);
+}
+.trek-select-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trek-select-caret { flex: none; display: inline-flex; color: var(--text-faint); transition: transform .15s; }
+.trek-select-trigger[aria-expanded="true"] .trek-select-caret { transform: rotate(180deg); }
+.trek-select-menu {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 50;
+  margin-top: 6px; padding: 4px;
+  max-height: 260px; overflow-y: auto;
+  background: var(--bg-card); color: var(--text-primary);
+  border: 1px solid var(--border-primary); border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+.trek-select-menu[data-placement="top"] { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 6px; }
+.trek-select-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 7px; cursor: pointer;
+  font-size: 13px; white-space: nowrap;
+}
+.trek-select-option.trek-active { background: var(--bg-hover); }
+.trek-select-option[aria-selected="true"] { color: var(--accent); font-weight: 600; }
+.trek-select-option[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+
+/* Chips + badges ----------------------------------------------------------- */
+.trek-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  color: var(--text-secondary); background: var(--accent-subtle);
+}
+.trek-chip--accent  { color: var(--accent);  background: color-mix(in oklch, var(--accent) 12%, transparent); }
+.trek-chip--success { color: var(--success); background: var(--success-soft); }
+.trek-chip--danger  { color: var(--danger);  background: var(--danger-soft); }
+.trek-chip--warning { color: var(--warning); background: var(--warning-soft); }
+.trek-chip--info    { color: var(--info);    background: var(--info-soft); }
+
+/* Rows + text helpers ------------------------------------------------------ */
+.trek-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 12px; cursor: pointer;
+  transition: background .12s;
+}
+.trek-row:hover { background: var(--bg-hover); }
+.trek-title { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .14em; color: var(--text-muted); }
+.trek-muted { color: var(--text-muted); }
+.trek-faint { color: var(--text-faint); }
+
+/* Layout helpers ----------------------------------------------------------- */
+.trek-stack { display: flex; flex-direction: column; gap: 12px; }
+.trek-cluster { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+/* Motion library — the host's animation vocabulary, mirrored 1:1 from
+   index.css so plugin UI moves exactly like TREK does. ---------------------- */
+@keyframes trek-menu-enter {
+  from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes trek-popover-enter {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes trek-modal-enter {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes trek-backdrop-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes trek-toast-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes trek-progress-fill {
+  from { width: 0%; }
+  to   { width: var(--trek-progress-to, 0%); }
+}
+@keyframes trek-pie-reveal {
+  from { opacity: 0; transform: rotate(-90deg) scale(0.85); }
+  to   { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+@keyframes trek-bar-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes trek-page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes trek-shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+@keyframes trek-drawer-enter {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes trek-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.trek-menu-enter {
+  animation: trek-menu-enter 200ms var(--trek-ease-quint);
+  transform-origin: top right; will-change: transform, opacity;
+}
+.trek-menu-enter-left {
+  animation: trek-menu-enter 200ms var(--trek-ease-quint);
+  transform-origin: top left; will-change: transform, opacity;
+}
+.trek-popover-enter { animation: trek-popover-enter 180ms var(--trek-ease-quint); will-change: transform, opacity; }
+.trek-modal-enter { animation: trek-modal-enter 220ms var(--trek-ease-quint); will-change: transform, opacity; }
+@media (max-width: 639px) {
+  .trek-modal-enter { animation: trek-drawer-enter 320ms cubic-bezier(0.32, 0.72, 0, 1); }
+}
+.trek-backdrop-enter { animation: trek-backdrop-enter 180ms var(--trek-ease-quint); }
+.trek-toast-enter { animation: trek-toast-enter 260ms var(--trek-ease-quint); will-change: transform, opacity; }
+.trek-pie-reveal {
+  animation: trek-pie-reveal 900ms var(--trek-ease-quint) both;
+  transform-origin: center; will-change: transform, opacity;
+}
+.trek-bar-fill {
+  animation: trek-bar-fill 700ms var(--trek-ease-quint) both;
+  transform-origin: left center; will-change: transform;
+}
+.trek-page-enter { animation: trek-page-enter 220ms var(--trek-ease-quint) both; }
+.trek-skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 0%, var(--bg-hover) 50%, var(--bg-tertiary) 100%);
+  background-size: 200% 100%;
+  animation: trek-shimmer 1.6s linear infinite;
+  border-radius: 8px; color: transparent; user-select: none;
+}
+[data-theme="dark"] .trek-skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%);
+  background-size: 200% 100%;
+}
+.trek-stagger > * { animation: trek-fade-up 280ms var(--trek-ease-quint) both; }
+.trek-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.trek-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.trek-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.trek-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.trek-stagger > *:nth-child(5) { animation-delay: 160ms; }
+.trek-stagger > *:nth-child(6) { animation-delay: 200ms; }
+.trek-stagger > *:nth-child(7) { animation-delay: 240ms; }
+.trek-stagger > *:nth-child(8) { animation-delay: 280ms; }
+.trek-stagger > *:nth-child(n+9) { animation-delay: 320ms; }
+
+/* Accessibility: mirror the host's own graceful-degrade rules. -------------- */
+[data-no-transparency] .trek-glass {
+  background: var(--bg-card); border-color: var(--border-primary);
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+[data-reduce-motion] .trek-interactive,
+[data-reduce-motion] .trek-btn,
+[data-reduce-motion] .trek-row { transition: none; }
+[data-reduce-motion] .trek-interactive:hover,
+[data-reduce-motion] .trek-btn:active { transform: none; }
+[data-reduce-motion] .trek-menu-enter, [data-reduce-motion] .trek-menu-enter-left,
+[data-reduce-motion] .trek-popover-enter, [data-reduce-motion] .trek-modal-enter,
+[data-reduce-motion] .trek-toast-enter, [data-reduce-motion] .trek-stagger > *,
+[data-reduce-motion] .trek-page-enter {
+  animation: trek-backdrop-enter 120ms ease-out;
+}
+[data-reduce-motion] .trek-pie-reveal, [data-reduce-motion] .trek-bar-fill {
+  animation: trek-backdrop-enter 120ms ease-out both;
+}
+[data-reduce-motion] .trek-skeleton { animation: none; background: var(--bg-tertiary); }
+[data-reduce-motion] .trek-select-caret { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .trek-interactive, .trek-btn, .trek-row, .trek-input, .trek-textarea, .trek-select, .trek-select-caret { transition: none; }
+  .trek-interactive:hover, .trek-btn:active { transform: none; }
+  .trek-menu-enter, .trek-menu-enter-left, .trek-popover-enter,
+  .trek-modal-enter, .trek-toast-enter, .trek-stagger > *, .trek-page-enter {
+    animation: trek-backdrop-enter 120ms ease-out;
+  }
+  .trek-pie-reveal, .trek-bar-fill { animation: trek-backdrop-enter 120ms ease-out both; }
+  .trek-skeleton { animation: none; background: var(--bg-tertiary); }
+}</style>
+  <script>(function () {
+  'use strict';
+  var docEl = document.documentElement;
+  var ctxHandlers = [];
+  var evtHandlers = [];
+  var lastCtx = null;
+  var pending = {};
+  var pendingConfirms = {};
+  var seq = 0;
+  var lastH = -1;
+
+  function send(msg) { try { window.parent.postMessage(msg, '*'); } catch (e) {} }
+  function setFlag(name, on) { if (on) { docEl.setAttribute(name, ''); } else { docEl.removeAttribute(name); } }
+
+  function applyContext(m) {
+    if (m.theme) { docEl.setAttribute('data-theme', m.theme); }
+    if (m.locale) { docEl.setAttribute('lang', m.locale); }
+    docEl.setAttribute('dir', m.dir === 'rtl' ? 'rtl' : 'ltr');
+    var t = m.tokens || {};
+    for (var k in t) {
+      if (Object.prototype.hasOwnProperty.call(t, k) && t[k]) { docEl.style.setProperty(k, t[k]); }
+    }
+    var a = m.appearance || {};
+    setFlag('data-reduce-motion', a.reducedMotion);
+    setFlag('data-no-transparency', a.noTransparency);
+    if (a.density) { docEl.setAttribute('data-density', a.density); }
+    if (a.scheme) { docEl.setAttribute('data-scheme', a.scheme); }
+    if (document.body) { document.body.classList.add('trek-ui'); }
+  }
+
+  function reportHeight() {
+    var h = Math.ceil(document.documentElement.scrollHeight);
+    if (h > 0 && h !== lastH) { lastH = h; send({ type: 'trek:resize', height: h }); }
+  }
+
+  window.addEventListener('message', function (ev) {
+    // Opaque frame: origin serialises to 'null', so trust the SENDER — only our real
+    // parent window. Never act on a claimed id or on origin.
+    if (ev.source !== window.parent) { return; }
+    var m = ev.data;
+    if (!m || typeof m !== 'object') { return; }
+    if (m.type === 'trek:context') {
+      lastCtx = m; api.context = m;
+      applyContext(m);
+      for (var i = 0; i < ctxHandlers.length; i++) { try { ctxHandlers[i](m); } catch (e) {} }
+      reportHeight();
+    } else if (m.type === 'trek:response') {
+      var p = pending[m.requestId];
+      if (p) { delete pending[m.requestId]; p.resolve(m.data); }
+    } else if (m.type === 'trek:error') {
+      var q = pending[m.requestId];
+      if (q) { delete pending[m.requestId]; var err = new Error(m.message || 'invoke failed'); err.code = m.code; q.reject(err); }
+    } else if (m.type === 'trek:confirm:result') {
+      var c = pendingConfirms[m.requestId];
+      if (c) { delete pendingConfirms[m.requestId]; c(!!m.confirmed); }
+    } else if (m.type === 'trek:event') {
+      for (var j = 0; j < evtHandlers.length; j++) { try { evtHandlers[j](m.event, m.tripId); } catch (e) {} }
+    }
+  });
+
+  // Native DOM helpers so a widget can build kit-styled UI with no bundler and no
+  // hand-written CSS — every element carries the same trek-* classes the kit ships.
+  function mkEl(tag, props, children) {
+    var node = document.createElement(tag);
+    props = props || {};
+    for (var k in props) {
+      if (!Object.prototype.hasOwnProperty.call(props, k)) { continue; }
+      var v = props[k];
+      if (v == null) { continue; }
+      if (k === 'class' || k === 'className') { node.className = v; }
+      else if (k === 'text') { node.textContent = v; }
+      else if (k === 'html') { node.innerHTML = v; }
+      else if (k === 'on') { for (var ev in v) { if (Object.prototype.hasOwnProperty.call(v, ev)) { node.addEventListener(ev, v[ev]); } } }
+      else { node.setAttribute(k, v); }
+    }
+    var kids = children == null ? [] : (typeof children === 'string' || children.nodeType ? [children] : children);
+    for (var i = 0; i < kids.length; i++) {
+      var c = kids[i];
+      if (c == null) { continue; }
+      node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    }
+    return node;
+  }
+  var ui = {
+    el: mkEl,
+    button: function (label, opts) {
+      opts = opts || {};
+      return mkEl('button', { class: 'trek-btn' + (opts.variant ? ' trek-btn--' + opts.variant : ''), type: 'button', text: label, on: opts.onClick ? { click: opts.onClick } : null }, null);
+    },
+    card: function (children) { return mkEl('div', { class: 'trek-card' }, children); },
+    chip: function (text, variant) { return mkEl('span', { class: 'trek-chip' + (variant ? ' trek-chip--' + variant : ''), text: text }, null); },
+    input: function (opts) { opts = opts || {}; return mkEl('input', { class: 'trek-input', type: opts.type || 'text', placeholder: opts.placeholder || '', value: opts.value || '' }, null); },
+    mount: function (node, target) { (target || document.body).appendChild(node); return node; }
+  };
+
+  var api = {
+    context: null,
+    ui: ui,
+    ready: function () { send({ type: 'trek:ready' }); },
+    requestContext: function () { send({ type: 'trek:context:request' }); },
+    onContext: function (cb) {
+      ctxHandlers.push(cb);
+      if (lastCtx) { try { cb(lastCtx); } catch (e) {} }
+      return function () { var i = ctxHandlers.indexOf(cb); if (i >= 0) { ctxHandlers.splice(i, 1); } };
+    },
+    notify: function (level, message, duration) { send({ type: 'trek:notify', level: level, message: message, duration: duration }); },
+    navigate: function (to) { send({ type: 'trek:navigate', to: to }); },
+    openExternal: function (url) { send({ type: 'trek:openExternal', url: url }); },
+    resize: function (px) { var h = px | 0; if (h > 0) { lastH = h; send({ type: 'trek:resize', height: h }); } },
+    // Host-rendered native confirm dialog; resolves true/false. The host shows one
+    // at a time — a second concurrent request resolves false immediately.
+    confirm: function (opts) {
+      opts = typeof opts === 'string' ? { message: opts } : (opts || {});
+      var id = 'c' + (++seq);
+      return new Promise(function (resolve) {
+        pendingConfirms[id] = resolve;
+        send({ type: 'trek:confirm', requestId: id, title: opts.title, message: opts.message, confirmLabel: opts.confirmLabel, cancelLabel: opts.cancelLabel, danger: opts.danger });
+      });
+    },
+    // Core-event names for the trip in view ({ event, tripId } only, no payloads) —
+    // refetch via invoke() when something relevant fires instead of polling.
+    onEvent: function (cb) {
+      evtHandlers.push(cb);
+      return function () { var i = evtHandlers.indexOf(cb); if (i >= 0) { evtHandlers.splice(i, 1); } };
+    },
+    invoke: function (sub, opts) {
+      opts = opts || {};
+      var id = 'r' + (++seq);
+      return new Promise(function (resolve, reject) {
+        pending[id] = { resolve: resolve, reject: reject };
+        send({ type: 'trek:invoke', requestId: id, sub: sub, method: opts.method, body: opts.body });
+      });
+    }
+  };
+  window.trek = api;
+
+  // --- Native <select> -> host-styled listbox ---------------------------------
+  // A native select's popup is drawn by the OS and can't match TREK. Upgrade each
+  // one to a keyboard-accessible listbox that uses the kit tokens, while the real
+  // <select> stays in the DOM as the value/form source (kept in sync both ways).
+  // Opt out per field with data-trek-native; multi/size selects are left alone.
+  function dispatch(el, type) {
+    var ev;
+    try { ev = new Event(type, { bubbles: true }); }
+    catch (e) { ev = document.createEvent('Event'); ev.initEvent(type, true, false); }
+    el.dispatchEvent(ev);
+  }
+  function enhanceSelect(sel) {
+    if (!sel || sel.__trekSelect || sel.hasAttribute('data-trek-native')) { return; }
+    if (sel.multiple || sel.size > 1 || !sel.parentNode) { return; }
+    sel.__trekSelect = true;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'trek-select-wrap';
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+    sel.classList.add('trek-select-native-hidden');
+    sel.setAttribute('tabindex', '-1');
+    sel.setAttribute('aria-hidden', 'true');
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'trek-select trek-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    if (sel.disabled) { trigger.disabled = true; }
+    var valueEl = document.createElement('span');
+    valueEl.className = 'trek-select-value';
+    var caret = document.createElement('span');
+    caret.className = 'trek-select-caret';
+    caret.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    trigger.appendChild(valueEl);
+    trigger.appendChild(caret);
+    wrap.appendChild(trigger);
+
+    var menu = document.createElement('div');
+    menu.className = 'trek-select-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+    wrap.appendChild(menu);
+
+    var activeIdx = -1;
+
+    function syncTrigger() {
+      var o = sel.options[sel.selectedIndex];
+      valueEl.textContent = o ? o.text : '';
+    }
+    function buildMenu() {
+      menu.innerHTML = '';
+      for (var i = 0; i < sel.options.length; i++) {
+        var o = sel.options[i];
+        var item = document.createElement('div');
+        item.className = 'trek-select-option';
+        item.setAttribute('role', 'option');
+        item.setAttribute('data-idx', String(i));
+        item.setAttribute('aria-selected', i === sel.selectedIndex ? 'true' : 'false');
+        if (o.disabled) { item.setAttribute('aria-disabled', 'true'); }
+        item.textContent = o.text;
+        menu.appendChild(item);
+      }
+    }
+    function highlight(idx) {
+      var opts = menu.children;
+      for (var i = 0; i < opts.length; i++) {
+        opts[i].className = i === idx ? 'trek-select-option trek-active' : 'trek-select-option';
+      }
+      if (idx >= 0 && opts[idx] && opts[idx].scrollIntoView) { opts[idx].scrollIntoView({ block: 'nearest' }); }
+      activeIdx = idx;
+    }
+    function onDocDown(e) { if (!wrap.contains(e.target)) { closeMenu(); } }
+    function openMenu() {
+      if (trigger.disabled || !menu.hidden) { return; }
+      buildMenu();
+      menu.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      // Flip above the trigger when there isn't room below in the frame viewport.
+      var r = trigger.getBoundingClientRect();
+      var below = window.innerHeight - r.bottom;
+      if (below < Math.min(260, menu.scrollHeight + 12) && r.top > below) { menu.setAttribute('data-placement', 'top'); }
+      else { menu.removeAttribute('data-placement'); }
+      highlight(sel.selectedIndex);
+      reportHeight();
+      document.addEventListener('mousedown', onDocDown, true);
+    }
+    function closeMenu() {
+      if (menu.hidden) { return; }
+      menu.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('mousedown', onDocDown, true);
+      reportHeight();
+    }
+    function nextEnabled(from, dir) {
+      var i = from;
+      for (var n = 0; n < sel.options.length; n++) {
+        i += dir;
+        if (i < 0) { i = sel.options.length - 1; }
+        if (i >= sel.options.length) { i = 0; }
+        if (!sel.options[i].disabled) { return i; }
+      }
+      return from;
+    }
+    function commit(idx) {
+      if (idx < 0 || idx >= sel.options.length || sel.options[idx].disabled) { return; }
+      if (sel.selectedIndex !== idx) { sel.selectedIndex = idx; dispatch(sel, 'input'); dispatch(sel, 'change'); }
+      syncTrigger();
+      closeMenu();
+      trigger.focus();
+    }
+
+    trigger.addEventListener('click', function () { if (menu.hidden) { openMenu(); } else { closeMenu(); } });
+    trigger.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (menu.hidden) {
+        if (k === 'ArrowDown' || k === 'ArrowUp' || k === 'Enter' || k === ' ' || k === 'Spacebar') { e.preventDefault(); openMenu(); }
+        return;
+      }
+      if (k === 'Escape') { e.preventDefault(); closeMenu(); trigger.focus(); }
+      else if (k === 'ArrowDown') { e.preventDefault(); highlight(nextEnabled(activeIdx, 1)); }
+      else if (k === 'ArrowUp') { e.preventDefault(); highlight(nextEnabled(activeIdx, -1)); }
+      else if (k === 'Home') { e.preventDefault(); highlight(nextEnabled(-1, 1)); }
+      else if (k === 'End') { e.preventDefault(); highlight(nextEnabled(0, -1)); }
+      else if (k === 'Enter' || k === ' ' || k === 'Spacebar') { e.preventDefault(); commit(activeIdx); }
+      else if (k === 'Tab') { closeMenu(); }
+    });
+    menu.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keep focus on the trigger
+    menu.addEventListener('click', function (e) {
+      var t = e.target;
+      while (t && t !== menu && !(t.getAttribute && t.hasAttribute('data-idx'))) { t = t.parentNode; }
+      if (t && t.getAttribute && t.hasAttribute('data-idx')) { commit(parseInt(t.getAttribute('data-idx'), 10)); }
+    });
+    menu.addEventListener('mousemove', function (e) {
+      var t = e.target;
+      while (t && t !== menu && !(t.getAttribute && t.hasAttribute('data-idx'))) { t = t.parentNode; }
+      if (t && t.getAttribute && t.hasAttribute('data-idx')) { highlight(parseInt(t.getAttribute('data-idx'), 10)); }
+    });
+    // The plugin may set select.value itself — mirror it back to the trigger.
+    sel.addEventListener('change', syncTrigger);
+    syncTrigger();
+  }
+  function enhanceAllSelects(root) {
+    var live = (root || document).getElementsByTagName('select');
+    var arr = [];
+    for (var i = 0; i < live.length; i++) { arr.push(live[i]); }
+    for (var j = 0; j < arr.length; j++) { enhanceSelect(arr[j]); }
+  }
+
+  function boot() {
+    if (document.body) { document.body.classList.add('trek-ui'); }
+    enhanceAllSelects(document);
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      new MutationObserver(function (muts) {
+        for (var i = 0; i < muts.length; i++) {
+          var added = muts[i].addedNodes;
+          for (var j = 0; j < added.length; j++) {
+            var n = added[j];
+            if (!n || n.nodeType !== 1) { continue; }
+            if (n.tagName === 'SELECT') { enhanceSelect(n); }
+            else if (n.getElementsByTagName) { enhanceAllSelects(n); }
+          }
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+    api.ready();
+    reportHeight();
+    if (typeof ResizeObserver !== 'undefined' && document.body) {
+      new ResizeObserver(reportHeight).observe(document.body);
+    }
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
+})();</script>
+  <style>
+    /* ── Plugin-specific styles — all colours via TREK design tokens ── */
+
+    /* Hero banner */
+    .hero{background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4338ca 100%);padding:16px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+    .hero-left{flex:1;min-width:200px;}
+    .hero-title{font-size:18px;font-weight:800;margin-bottom:3px;letter-spacing:-.3px;}
+    .hero-dates{font-size:12px;color:#a5b4fc;margin-bottom:8px;}
+    .hero-pills{display:flex;flex-wrap:wrap;gap:5px;}
+    .hero-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;color:#e0e7ff;cursor:pointer;font-family:inherit;transition:background .12s;}
+    .hero-pill:hover{background:rgba(255,255,255,.22);}
+    .hero-pill.airline{background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.3);color:#fde68a;}
+    .hero-right{text-align:right;flex-shrink:0;}
+    .hero-countdown{font-size:36px;font-weight:800;line-height:1;}
+    .hero-countdown-label{font-size:11px;color:#a5b4fc;margin-top:2px;}
+    .hero-duration{font-size:13px;color:#c7d2fe;margin-top:5px;}
+
+    /* Tab bar */
+    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border-primary);flex-wrap:wrap;padding:0 24px;}
+    .tab{padding:10px 14px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text-muted);border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;transition:color .12s,border-color .12s;}
+    .tab:hover{color:var(--text-primary);}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .pane{display:none;padding:20px 24px;}.pane.active{display:block;}
+
+    /* Country dropdown (custom — not a <select>) */
+    .country-wrap{position:relative;flex:1;min-width:170px;}
+    .country-display{width:100%;background:var(--bg-input);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:7px 10px;color:var(--text-primary);font-size:13px;cursor:pointer;text-align:left;font-family:inherit;display:flex;justify-content:space-between;align-items:center;transition:border-color .12s;}
+    .country-display:hover{border-color:var(--accent);}
+    .arrow{font-size:9px;color:var(--text-faint);}
+    .country-dd{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-sm);margin-top:4px;z-index:40;box-shadow:var(--shadow-md);max-height:240px;overflow:hidden;flex-direction:column;}
+    .country-dd.open{display:flex;}
+    .country-search{border:none;border-bottom:1px solid var(--border-primary);padding:8px 10px;font-size:13px;outline:none;font-family:inherit;background:var(--bg-card);color:var(--text-primary);flex-shrink:0;}
+    .country-list{overflow-y:auto;flex:1;}
+    .country-opt{padding:7px 10px;font-size:13px;cursor:pointer;color:var(--text-primary);}
+    .country-opt:hover{background:var(--bg-hover);}
+    .country-opt .code{font-size:10px;color:var(--text-faint);margin-right:5px;font-weight:600;}
+
+    /* Generic input helpers */
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+    input[type=text],input[type=date],input[type=number]{background:var(--bg-input);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:7px 10px;color:var(--text-primary);font-size:13px;outline:none;font-family:inherit;transition:border-color .12s;}
+    input:focus{border-color:var(--accent);}
+    button.primary{background:var(--accent);border:none;border-radius:var(--radius-sm);padding:7px 14px;color:var(--accent-text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .12s;}
+    button.primary:hover:not(:disabled){background:var(--accent-hover);}
+    button.primary:disabled{opacity:.5;cursor:default;}
+
+    /* Visa */
+    .visa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:8px;}
+    .visa-card{background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:12px 14px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow-card);}
+    .visa-card-top{display:flex;justify-content:space-between;align-items:flex-start;}
+    .visa-country-name{font-size:13px;font-weight:700;color:var(--text-primary);}
+    .visa-country-code{font-size:10px;color:var(--text-faint);font-weight:600;}
+    .visa-badge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+    .visa-free{background:var(--success-soft);color:var(--success);}
+    .visa-arrival{background:var(--warning-soft);color:var(--warning);}
+    .visa-evisa{background:var(--info-soft);color:var(--info);}
+    .visa-required{background:var(--danger-soft);color:var(--danger);}
+    .visa-other{background:var(--bg-tertiary);color:var(--text-muted);}
+    .visa-days{font-size:12px;color:var(--text-muted);}
+    .filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+    .filter-select{background:var(--bg-input);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text-primary);font-size:12px;outline:none;cursor:pointer;font-family:inherit;}
+    .count-badge{font-size:12px;color:var(--text-faint);}
+
+    /* Holidays */
+    .holiday-list{border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;margin-top:8px;background:var(--bg-card);}
+    .holiday-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border-secondary);}
+    .holiday-row:last-child{border-bottom:none;}
+    .holiday-row.national{background:var(--success-soft);}
+    .holiday-date{font-size:12px;font-weight:700;color:var(--accent);min-width:110px;flex-shrink:0;}
+    .holiday-name{font-size:13px;color:var(--text-primary);flex:1;font-weight:600;}
+    .holiday-local{font-size:11px;color:var(--text-faint);font-weight:400;}
+    .nat-badge{font-size:9.5px;font-weight:700;background:var(--success-soft);color:var(--success);border-radius:4px;padding:1px 5px;flex-shrink:0;}
+
+    /* Weather */
+    .weather-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:8px;}
+    .weather-day{border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:10px 8px;background:var(--bg-card);text-align:center;box-shadow:var(--shadow-card);}
+    .weather-day.weekend{background:var(--bg-secondary);}
+    .weather-date{font-size:10px;color:var(--text-faint);margin-bottom:2px;}
+    .weather-wday{font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:2px;}
+    .weather-icon{font-size:22px;margin:3px 0;}
+    .weather-desc{font-size:9.5px;color:var(--text-faint);margin-bottom:4px;line-height:1.3;}
+    .weather-temps{font-size:13px;font-weight:700;color:var(--text-primary);}
+    .weather-temps span{font-weight:400;color:var(--text-faint);font-size:11px;}
+    .weather-rain{font-size:9.5px;color:var(--info);margin-top:3px;}
+    .weather-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:14px;}
+    .wx-sum-card{background:var(--info-soft);border:1px solid color-mix(in oklch,var(--info) 20%,transparent);border-radius:var(--radius-md);padding:10px 12px;}
+    .wx-sum-label{font-size:10.5px;color:var(--info);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+    .wx-sum-value{font-size:16px;font-weight:800;color:var(--text-primary);margin-top:2px;}
+
+    /* Currency */
+
+    /* Duty-free */
+    .chip-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+    .chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 6px 4px 10px;border-radius:999px;background:var(--info-soft);color:var(--info);border:1px solid color-mix(in oklch,var(--info) 25%,transparent);}
+    .chip button{all:unset;cursor:pointer;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-size:12px;color:var(--info);}
+    .chip button:hover{background:color-mix(in oklch,var(--info) 15%,transparent);}
+    .duty-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:8px;}
+    .allowance-card{border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:14px 16px;background:var(--bg-card);box-shadow:var(--shadow-card);}
+    .allowance-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+    .allowance-title{font-size:14px;font-weight:800;color:var(--text-primary);}
+    .allowance-remove{background:none;border:none;color:var(--danger);font-size:11.5px;cursor:pointer;font-family:inherit;}
+    .allowance-items{display:flex;flex-direction:column;gap:4px;}
+    .a-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border-secondary);}
+    .a-row:last-child{border-bottom:none;}
+    .a-lbl{font-size:11.5px;color:var(--text-muted);}
+    .a-val{font-size:12px;font-weight:700;color:var(--text-primary);text-align:right;max-width:60%;}
+    .a-note{font-size:11.5px;color:var(--warning);background:var(--warning-soft);padding:5px 8px;border-radius:6px;margin-top:5px;line-height:1.4;}
+
+    /* Luggage */
+    .entry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:8px;}
+    .entry-card{border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:12px 14px;background:var(--bg-card);box-shadow:var(--shadow-card);}
+    .entry-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+    .entry-name{font-size:13px;font-weight:700;color:var(--text-primary);}
+    .entry-airline{font-size:11.5px;color:var(--text-muted);margin-top:1px;}
+    .entry-remove{background:none;border:none;color:var(--danger);font-size:11.5px;cursor:pointer;font-family:inherit;}
+    .limits-list{display:flex;flex-direction:column;gap:5px;}
+    .l-row{display:flex;justify-content:space-between;font-size:12px;}
+    .l-lbl{color:var(--text-muted);}.l-val{font-weight:700;color:var(--text-primary);}
+    .fare-note{font-size:11px;color:var(--warning);margin-top:5px;line-height:1.4;}
+    .auto-tag{font-size:9.5px;font-weight:700;background:var(--success-soft);color:var(--success);border-radius:4px;padding:1px 5px;margin-left:4px;}
+    .summary-card{background:var(--success-soft);border:1px solid color-mix(in oklch,var(--success) 30%,transparent);border-radius:var(--radius-md);padding:14px 16px;margin-top:12px;}
+    .summary-title{font-size:13px;font-weight:700;color:var(--success);margin-bottom:8px;}
+    .summary-item{font-size:12.5px;color:var(--success);margin-bottom:3px;line-height:1.4;}
+
+    /* Emergency */
+    .emergency-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+    .emergency-card{border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:14px 16px;background:var(--bg-card);box-shadow:var(--shadow-card);}
+    .emergency-card-title{font-size:13px;font-weight:800;color:var(--text-primary);margin-bottom:10px;}
+    .emergency-numbers{display:flex;flex-direction:column;gap:6px;}
+    .e-row{display:flex;justify-content:space-between;align-items:center;}
+    .e-lbl{font-size:11.5px;color:var(--text-muted);}
+    .e-num{font-size:14px;font-weight:800;font-family:monospace;color:var(--text-primary);}
+    .e-num.police{color:var(--info);}
+    .e-num.fire{color:var(--danger);}
+    .e-num.ambulance{color:var(--success);}
+    .embassy-note{font-size:11px;color:var(--text-faint);margin-top:8px;line-height:1.4;}
+
+    /* AI Briefing cards */
+    .briefing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;}
+    @media(max-width:900px){.briefing-grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:600px){.briefing-grid{grid-template-columns:1fr;}}
+    .b-card{background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-card);}
+    .b-card-title{font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:2px;}
+    .b-card-subtitle{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin-bottom:12px;}
+    .b-card-body{font-size:13px;color:var(--text-secondary);line-height:1.6;}
+    .b-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+    .b-stat{border-radius:var(--radius-sm);padding:10px 12px;}
+    .b-stat.green{background:var(--success-soft);border:1px solid color-mix(in oklch,var(--success) 25%,transparent);}
+    .b-stat.amber{background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 25%,transparent);}
+    .b-stat.blue{background:var(--info-soft);border:1px solid color-mix(in oklch,var(--info) 25%,transparent);}
+    .b-stat.purple{background:color-mix(in oklch,#8b5cf6 12%,transparent);border:1px solid color-mix(in oklch,#8b5cf6 20%,transparent);}
+    .b-stat.neutral{background:var(--bg-secondary);border:1px solid var(--border-primary);}
+    .b-stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px;}
+    .b-stat-value{font-size:14px;font-weight:700;color:var(--text-primary);}
+    .b-list{list-style:none;padding:0;margin:8px 0 0;}
+    .b-list li{font-size:12.5px;color:var(--text-secondary);padding:4px 0;border-bottom:1px solid var(--border-secondary);display:flex;align-items:flex-start;gap:8px;line-height:1.4;}
+    .b-list li:last-child{border-bottom:none;}
+    .b-list li::before{content:"•";color:var(--accent);font-weight:800;flex-shrink:0;margin-top:1px;}
+    .b-list li.warn::before{content:"△";color:var(--warning);}
+    .b-do-dont{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+    .b-pair{background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;}
+    .b-do{color:var(--success);margin-bottom:3px;}
+    .b-dont{color:var(--danger);}
+    .b-do::before{content:"✓ ";font-weight:700;}
+    .b-dont::before{content:"✕ ";font-weight:700;}
+    .b-phrase-grid{margin-top:10px;display:flex;flex-direction:column;gap:5px;}
+    .b-phrase{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius-sm);}
+    .b-phrase-text{font-size:13px;font-weight:700;color:var(--accent);}
+    .b-phrase-meaning{font-size:12px;color:var(--text-muted);}
+    .b-advisory{display:flex;gap:14px;align-items:center;background:var(--success-soft);border:1px solid color-mix(in oklch,var(--success) 25%,transparent);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:12px;}
+    .b-advisory.level2{background:var(--warning-soft);border-color:color-mix(in oklch,var(--warning) 30%,transparent);}
+    .b-advisory.level3{background:color-mix(in oklch,#f97316 10%,transparent);border-color:color-mix(in oklch,#f97316 25%,transparent);}
+    .b-advisory.level4,.b-advisory.level5{background:var(--danger-soft);border-color:color-mix(in oklch,var(--danger) 25%,transparent);}
+    .b-advisory-level{width:38px;height:38px;border-radius:50%;background:var(--success);color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .b-advisory.level2 .b-advisory-level{background:var(--warning);}
+    .b-advisory.level3 .b-advisory-level{background:#f97316;}
+    .b-advisory.level4 .b-advisory-level,.b-advisory.level5 .b-advisory-level{background:var(--danger);}
+    .b-advisory-text{flex:1;}
+    .b-advisory-title{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:2px;}
+    .b-advisory-body{font-size:12px;color:var(--text-muted);}
+    .b-conn-option{border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:8px;background:var(--bg-secondary);}
+    .b-conn-type{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:3px;}
+    .b-conn-detail{font-size:12px;color:var(--text-muted);line-height:1.4;}
+    .b-power-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;}
+    .b-power-cell{background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:10px 12px;}
+    .b-power-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:4px;}
+    .b-power-value{font-size:15px;font-weight:800;color:var(--text-primary);}
+    .b-skeleton{background:linear-gradient(90deg,var(--bg-tertiary) 0%,var(--bg-hover) 50%,var(--bg-tertiary) 100%);background-size:200% 100%;animation:trek-shimmer 1.6s linear infinite;border-radius:var(--radius-md);height:180px;margin-bottom:14px;}
+    .b-gen-note{font-size:11.5px;color:var(--text-faint);margin-top:10px;font-style:italic;}
+    .full-width{grid-column:1/-1;}
+
+    /* Cat buttons (country/section selectors) */
+    .cat-btn{border:1.5px solid var(--border-primary);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;background:var(--bg-card);color:var(--text-muted);font-family:inherit;transition:all .12s;}
+    .cat-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .cat-btn.active{background:var(--accent);border-color:var(--accent);color:var(--accent-text);}
+
+    /* Airline search dropdown */
+    #lg-airline-dd{background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-sm);box-shadow:var(--shadow-md);color:var(--text-primary);}
+
+    /* Misc */
+    .section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-faint);margin:14px 0 8px;}
+    .disclaimer{background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 30%,transparent);color:var(--warning);border-radius:var(--radius-sm);padding:8px 10px;font-size:11.5px;line-height:1.5;margin-bottom:12px;}
+    .status-text{color:var(--text-muted);font-size:13px;padding:6px 0;}
+    .status-text.error{color:var(--danger);}
+    .note-bar{font-size:11.5px;color:var(--warning);background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 25%,transparent);border-radius:6px;padding:6px 10px;margin-bottom:8px;}
+    .empty-note{font-size:13px;color:var(--text-faint);font-style:italic;padding:8px 0;}
+    .results-wrap{max-height:500px;overflow-y:auto;}
+    .content-area{background:var(--bg-primary);padding:0 24px 24px;}
+  </style>
+</head>
+<body>
+<!-- Trip summary hero -->
+<div class="hero" id="hero" style="display:none;">
+  <div class="hero-left">
+    <div class="hero-title" id="hero-title">Trip Research</div>
+    <div class="hero-dates" id="hero-dates"></div>
+    <div class="hero-pills" id="hero-pills"></div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-countdown" id="hero-countdown"></div>
+    <div class="hero-countdown-label" id="hero-countdown-label"></div>
+    <div class="hero-duration" id="hero-duration"></div>
+  </div>
+</div>
+
+<div class="content-area">
+  <div class="tabs" style="padding-top:4px;">
+    <button class="tab active" id="tab-overview" onclick="switchTab('overview')">🌐 Overview</button>
+    <button class="tab" id="tab-visa" onclick="switchTab('visa')">🛂 Visa</button>
+    <button class="tab" id="tab-holidays" onclick="switchTab('holidays')">📅 Holidays</button>
+    <button class="tab" id="tab-weather" onclick="switchTab('weather')">⛅ Weather</button>
+    <button class="tab" id="tab-safety" onclick="switchTab('safety')">🛡 Safety</button>
+    <button class="tab" id="tab-health" onclick="switchTab('health')">💉 Health</button>
+    <button class="tab" id="tab-culture" onclick="switchTab('culture')">🎎 Culture</button>
+    <button class="tab" id="tab-connectivity" onclick="switchTab('connectivity')">📶 Connectivity</button>
+    <button class="tab" id="tab-duty" onclick="switchTab('duty')">🛃 Duty-Free</button>
+    <button class="tab" id="tab-luggage" onclick="switchTab('luggage')">🧳 Luggage</button>
+    <button class="tab" id="tab-emergency" onclick="switchTab('emergency')">🚨 Emergency</button>
+  </div>
+
+  <!-- ══ OVERVIEW ══ -->
+  <div class="pane active" id="pane-overview">
+    <div class="row" style="margin-bottom:14px;">
+      <div class="country-wrap" id="wrap-ai-country"><button type="button" class="country-display" id="btn-ai-country"><span id="lbl-ai-country">Select destination…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-ai-country"><input class="country-search" id="search-ai-country" placeholder="Search…"/><div class="country-list" id="list-ai-country"></div></div><input type="hidden" id="val-ai-country"/></div>
+      <input type="hidden" id="val-ai-country-name"/>
+    </div>
+    <div id="pane-overview-content"><div class="status-text">Select a destination above or click a country pill in the header.</div></div>
+  </div>
+
+  <!-- ══ SAFETY ══ -->
+  <div class="pane" id="pane-safety">
+    <div id="pane-safety-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+  </div>
+
+  <!-- ══ HEALTH ══ -->
+  <div class="pane" id="pane-health">
+    <div id="pane-health-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+  </div>
+
+  <!-- ══ CULTURE ══ -->
+  <div class="pane" id="pane-culture">
+    <div id="pane-culture-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+  </div>
+
+  <!-- ══ CONNECTIVITY ══ -->
+  <div class="pane" id="pane-connectivity">
+    <div id="pane-connectivity-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+  </div>
+
+  <!-- ══ VISA ══ -->
+  <div class="pane" id="pane-visa">
+    <div class="row">
+      <div class="country-wrap" id="wrap-passport"><button type="button" class="country-display" id="btn-passport"><span id="lbl-passport">Your passport…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-passport"><input class="country-search" id="search-passport" placeholder="Search…"/><div class="country-list" id="list-passport"></div></div><input type="hidden" id="val-passport"/></div>
+      <div class="country-wrap" id="wrap-dest"><button type="button" class="country-display" id="btn-dest"><span id="lbl-dest">Destination (optional)…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-dest"><input class="country-search" id="search-dest" placeholder="Search…"/><div class="country-list" id="list-dest"></div></div><input type="hidden" id="val-dest"/></div>
+      <button class="primary" id="visa-btn">Look up</button>
+    </div>
+    <div class="filter-row" id="visa-filter-row" style="display:none;">
+      <select class="filter-select" id="visa-cat-filter"><option value="">All types</option><option value="Visa Free">Visa Free</option><option value="Visa on Arrival">Visa on Arrival</option><option value="E-Visa">E-Visa</option><option value="ETA">ETA</option><option value="Visa Required">Visa Required</option></select>
+      <span class="count-badge" id="visa-count"></span>
+    </div>
+    <div class="results-wrap"><div class="visa-grid" id="visa-results"><div class="status-text">Select your passport and click Look up.</div></div></div>
+  </div>
+
+  <!-- ══ HOLIDAYS ══ -->
+  <div class="pane" id="pane-holidays">
+    <div class="row">
+      <div class="country-wrap" id="wrap-hol"><button type="button" class="country-display" id="btn-hol"><span id="lbl-hol">Country…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-hol"><input class="country-search" id="search-hol" placeholder="Search…"/><div class="country-list" id="list-hol"></div></div><input type="hidden" id="val-hol"/></div>
+      <input type="date" id="hol-start" style="flex:1;"/>
+      <span style="font-size:12px;color:var(--text-faint);">→</span>
+      <input type="date" id="hol-end" style="flex:1;"/>
+      <button class="primary" id="hol-btn">Look up</button>
+    </div>
+    <div id="hol-results"><div class="status-text">Select a country to see public holidays during your trip.</div></div>
+  </div>
+
+  <!-- ══ WEATHER ══ -->
+  <div class="pane" id="pane-weather">
+    <div class="row">
+      <input type="text" id="wx-city" placeholder="City (e.g. Tokyo)" style="flex:2;min-width:130px;"/>
+      <div class="country-wrap" id="wrap-wx" style="flex:1;min-width:140px;"><button type="button" class="country-display" id="btn-wx"><span id="lbl-wx">Country…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-wx"><input class="country-search" id="search-wx" placeholder="Search…"/><div class="country-list" id="list-wx"></div></div><input type="hidden" id="val-wx"/></div>
+      <input type="date" id="wx-start" style="flex:1;"/>
+      <span style="font-size:12px;color:var(--text-faint);">→</span>
+      <input type="date" id="wx-end" style="flex:1;"/>
+      <button class="primary" id="wx-btn">Forecast</button>
+    </div>
+    <div id="wx-results"><div class="status-text">Enter a city and click Forecast.</div></div>
+  </div>
+
+  <!-- ══ DUTY-FREE ══ -->
+  <div class="pane" id="pane-duty">
+    <div class="disclaimer">⚠️ <strong>General reference only.</strong> Allowances change, vary by residency and transport mode. Always verify with the destination's official customs authority.</div>
+    <div class="section-label" style="margin-top:0;">Countries on this trip</div>
+    <div class="chip-wrap" id="duty-chips"></div>
+    <div class="row">
+      <div class="country-wrap" id="wrap-duty-add" style="flex:2;"><button type="button" class="country-display" id="btn-duty-add"><span id="lbl-duty-add">Add a country…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-duty-add"><input class="country-search" id="search-duty-add" placeholder="Search…"/><div class="country-list" id="list-duty-add"></div></div><input type="hidden" id="val-duty-add"/></div>
+      <button class="primary" id="duty-add-btn">Add</button>
+    </div>
+    <div class="duty-grid" id="duty-allowances"></div>
+  </div>
+
+  <!-- ══ LUGGAGE ══ -->
+  <div class="pane" id="pane-luggage">
+    <div class="disclaimer">⚠️ <strong>Typical standard economy limits only.</strong> Budget fares are often stricter. Always confirm with your booking.</div>
+    <div class="section-label" style="margin-top:0;">Add traveler</div>
+    <div class="row">
+      <input type="text" id="lg-name" placeholder="Traveler name" style="flex:1;min-width:120px;"/>
+      <div style="position:relative;flex:2;min-width:180px;">
+        <input type="text" id="lg-airline-search" placeholder="Search airline (e.g. SAS, Wizz)…" autocomplete="off" style="width:100%;"/>
+        <input type="hidden" id="lg-airline-value"/>
+        <div id="lg-airline-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid #d1d5db;border-radius:8px;margin-top:2px;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;"></div>
+      </div>
+      <button class="primary" id="lg-add-btn">Add</button>
+    </div>
+    <div class="entry-grid" id="lg-entries"></div>
+    <div id="lg-summary"></div>
+  </div>
+
+  <!-- ══ EMERGENCY ══ -->
+  <div class="pane" id="pane-emergency">
+    <div class="disclaimer">📞 Local emergency numbers for your trip countries. In an emergency always also contact your embassy — numbers below are general reference only.</div>
+    <div class="emergency-grid" id="emergency-grid"><div class="status-text">Loading…</div></div>
+  </div>
+</div>
+
+<script>
+var COUNTRIES={"AF":"Afghanistan","AL":"Albania","DZ":"Algeria","AS":"American Samoa","AD":"Andorra","AO":"Angola","AI":"Anguilla","AQ":"Antarctica","AG":"Antigua and Barbuda","AR":"Argentina","AM":"Armenia","AW":"Aruba","AU":"Australia","AT":"Austria","AZ":"Azerbaijan","BS":"Bahamas","BH":"Bahrain","BD":"Bangladesh","BB":"Barbados","BY":"Belarus","BE":"Belgium","BZ":"Belize","BJ":"Benin","BM":"Bermuda","BT":"Bhutan","BO":"Bolivia","BQ":"Bonaire","BA":"Bosnia and Herzegovina","BW":"Botswana","BR":"Brazil","BN":"Brunei","BG":"Bulgaria","BF":"Burkina Faso","BI":"Burundi","CV":"Cabo Verde","KH":"Cambodia","CM":"Cameroon","CA":"Canada","CF":"Central African Republic","TD":"Chad","CL":"Chile","CN":"China","CO":"Colombia","KM":"Comoros","CG":"Congo","CD":"DR Congo","CR":"Costa Rica","HR":"Croatia","CU":"Cuba","CY":"Cyprus","CZ":"Czechia","CI":"Côte d'Ivoire","DK":"Denmark","DJ":"Djibouti","DM":"Dominica","DO":"Dominican Republic","EC":"Ecuador","EG":"Egypt","SV":"El Salvador","GQ":"Equatorial Guinea","ER":"Eritrea","EE":"Estonia","SZ":"Eswatini","ET":"Ethiopia","FJ":"Fiji","FI":"Finland","FR":"France","GA":"Gabon","GM":"Gambia","GE":"Georgia","DE":"Germany","GH":"Ghana","GR":"Greece","GL":"Greenland","GD":"Grenada","GT":"Guatemala","GN":"Guinea","GW":"Guinea-Bissau","GY":"Guyana","HT":"Haiti","HN":"Honduras","HK":"Hong Kong","HU":"Hungary","IS":"Iceland","IN":"India","ID":"Indonesia","IR":"Iran","IQ":"Iraq","IE":"Ireland","IL":"Israel","IT":"Italy","JM":"Jamaica","JP":"Japan","JO":"Jordan","KZ":"Kazakhstan","KE":"Kenya","KI":"Kiribati","KP":"North Korea","KR":"South Korea","KW":"Kuwait","KG":"Kyrgyzstan","LA":"Laos","LV":"Latvia","LB":"Lebanon","LS":"Lesotho","LR":"Liberia","LY":"Libya","LI":"Liechtenstein","LT":"Lithuania","LU":"Luxembourg","MO":"Macao","MG":"Madagascar","MW":"Malawi","MY":"Malaysia","MV":"Maldives","ML":"Mali","MT":"Malta","MH":"Marshall Islands","MR":"Mauritania","MU":"Mauritius","MX":"Mexico","FM":"Micronesia","MD":"Moldova","MC":"Monaco","MN":"Mongolia","ME":"Montenegro","MA":"Morocco","MZ":"Mozambique","MM":"Myanmar","NA":"Namibia","NR":"Nauru","NP":"Nepal","NL":"Netherlands","NZ":"New Zealand","NI":"Nicaragua","NE":"Niger","NG":"Nigeria","MK":"North Macedonia","NO":"Norway","OM":"Oman","PK":"Pakistan","PW":"Palau","PA":"Panama","PG":"Papua New Guinea","PY":"Paraguay","PE":"Peru","PH":"Philippines","PL":"Poland","PT":"Portugal","QA":"Qatar","RO":"Romania","RU":"Russia","RW":"Rwanda","KN":"Saint Kitts","LC":"Saint Lucia","VC":"Saint Vincent","WS":"Samoa","SM":"San Marino","ST":"Sao Tome","SA":"Saudi Arabia","SN":"Senegal","RS":"Serbia","SC":"Seychelles","SL":"Sierra Leone","SG":"Singapore","SK":"Slovakia","SI":"Slovenia","SB":"Solomon Islands","SO":"Somalia","ZA":"South Africa","SS":"South Sudan","ES":"Spain","LK":"Sri Lanka","SD":"Sudan","SR":"Suriname","SE":"Sweden","CH":"Switzerland","SY":"Syria","TW":"Taiwan","TJ":"Tajikistan","TZ":"Tanzania","TH":"Thailand","TL":"Timor-Leste","TG":"Togo","TO":"Tonga","TT":"Trinidad and Tobago","TN":"Tunisia","TM":"Turkmenistan","TR":"Turkey","UG":"Uganda","UA":"Ukraine","AE":"United Arab Emirates","GB":"United Kingdom","US":"United States","UY":"Uruguay","UZ":"Uzbekistan","VU":"Vanuatu","VE":"Venezuela","VN":"Vietnam","YE":"Yemen","ZM":"Zambia","ZW":"Zimbabwe"};
+
+
+// country → currency code
+
+var DUTY_FREE={SE:{name:"Sweden (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"Arriving from within EU: no fixed limits for personal use."},DK:{name:"Denmark (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"Arriving from within EU: no fixed limits for personal use."},DE:{name:"Germany (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"EU arrivals: no fixed limits for personal use."},FR:{name:"France (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"EU arrivals: no fixed limits for personal use."},GB:{name:"United Kingdom",alcohol:"18L wine + 42L beer + 4L spirits",tobacco:"200 cigarettes or 250g tobacco",goods:"£390",cash:"Declare £10,000+",note:""},NO:{name:"Norway",alcohol:"1L spirits + 1.5L wine + 2L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"NOK 6,000",cash:"Declare NOK 25,000+",note:"Not in EU — full allowance always applies."},CH:{name:"Switzerland",alcohol:"1L >18% + 2L ≤18%",tobacco:"250g total",goods:"CHF 300",cash:"No fixed limit",note:"Not in EU."},US:{name:"United States",alcohol:"1L (age 21+ only)",tobacco:"200 cigarettes or 100 cigars",goods:"$800 personal exemption",cash:"Declare $10,000+",note:"Cuban cigars restricted."},CA:{name:"Canada",alcohol:"1.5L wine or 1.14L spirits or 8.5L beer",tobacco:"200 cigarettes",goods:"CAD 200–800 (depends on absence duration)",cash:"Declare CAD 10,000+",note:""},JP:{name:"Japan",alcohol:"3 bottles (760ml each)",tobacco:"200 cigarettes",goods:"¥200,000",cash:"Declare ¥1,000,000+",note:""},CN:{name:"China",alcohol:"1.5L",tobacco:"400 cigarettes",goods:"RMB 5,000",cash:"Declare $5,000+ USD or RMB 20,000+",note:""},KR:{name:"South Korea",alcohol:"1L",tobacco:"200 cigarettes",goods:"$800",cash:"Declare $10,000+",note:""},TH:{name:"Thailand",alcohol:"1L",tobacco:"200 cigarettes",goods:"THB 20,000",cash:"Declare $20,000+ equivalent",note:""},SG:{name:"Singapore",alcohol:"1L spirits + 1L wine + 1L beer (48h+ stay)",tobacco:"None — all tobacco is dutiable",goods:"SGD 500 (48h+) · SGD 100 (<48h)",cash:"Declare SGD 20,000+",note:"⚠ Zero tobacco allowance trips people up!"},AU:{name:"Australia",alcohol:"2.25L",tobacco:"25 cigarettes or 25g tobacco",goods:"AUD 900",cash:"Declare AUD 10,000+",note:""},NZ:{name:"New Zealand",alcohol:"~4.5L combined",tobacco:"50 cigarettes or 50g tobacco",goods:"NZD 700",cash:"Declare NZD 10,000+",note:""},AE:{name:"United Arab Emirates",alcohol:"4L (non-Muslim visitors only)",tobacco:"400 cigarettes",goods:"AED 3,000",cash:"Declare large amounts",note:"Alcohol rules vary by emirate."},IN:{name:"India",alcohol:"2L",tobacco:"100 cigarettes or 125g tobacco",goods:"₹50,000",cash:"Declare $5,000 cash / $10,000 total",note:""},MX:{name:"Mexico",alcohol:"3L",tobacco:"200 cigarettes",goods:"$500 air · $300 land",cash:"Declare $10,000+",note:""},RO:{name:"Romania (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"EU arrivals: no fixed limits for personal use."}};
+
+var AIRLINES={"SAS":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Basic/Light: often no free checked bag."},"Norwegian":{co:"55×40×23",ck:10,dc:"158 linear cm",dk:20,di:false,note:"LowFare: checked bag is a paid add-on."},"Finnair":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"Ryanair":{co:"40×20×25",ck:10,dc:"Priority = larger cabin bag",dk:20,di:false,note:"Only a small under-seat bag is free by default."},"easyJet":{co:"45×36×20",ck:null,dc:"Hold bag optional",dk:23,di:false,note:"No weight limit on cabin bag if under seat."},"Wizz Air":{co:"40×30×20",ck:10,dc:"Larger bag optional",dk:20,di:false,note:"Only small personal item free by default."},"Wizzair":{co:"40×30×20",ck:10,dc:"Larger bag optional",dk:20,di:false,note:"Only small personal item free by default."},"Lufthansa":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Economy Light: no free checked bag."},"KLM":{co:"55×35×25",ck:12,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"Air France":{co:"55×35×25",ck:12,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"British Airways":{co:"56×45×25",ck:23,dc:"90×75×43 (approx)",dk:23,di:true,note:"Basic fares on some routes: cabin bag only."},"AIR CHINA":{co:"55×40×20",ck:5,dc:"158 linear cm",dk:23,di:true,note:"Economy: 1 free checked bag on most routes."},"Air China":{co:"55×40×20",ck:5,dc:"158 linear cm",dk:23,di:true,note:"Economy: 1 free checked bag on most routes."},"ANA":{co:"55×40×25",ck:10,dc:"158 linear cm",dk:23,di:true,note:""},"JAL":{co:"55×40×25",ck:10,dc:"158 linear cm",dk:23,di:true,note:""},"Singapore Airlines":{co:"55×38×20",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Emirates":{co:"55×38×22",ck:7,dc:"158 linear cm",dk:23,di:true,note:"Special Economy: reduced checked allowance."},"Qatar Airways":{co:"50×37×25",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Turkish Airlines":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:""},"Qantas":{co:"56×36×23",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Cathay Pacific":{co:"56×36×23",ck:7,dc:"158 linear cm",dk:23,di:true,note:""}};
+
+var EMERGENCY={DK:{name:"Denmark",police:"114",fire:"112",ambulance:"112",embassy_hint:"Find DK embassies at um.dk"},SE:{name:"Sweden",police:"114",fire:"112",ambulance:"112"},NO:{name:"Norway",police:"112",fire:"110",ambulance:"113"},FI:{name:"Finland",police:"112",fire:"112",ambulance:"112"},DE:{name:"Germany",police:"110",fire:"112",ambulance:"112"},FR:{name:"France",police:"17",fire:"18",ambulance:"15"},GB:{name:"United Kingdom",police:"999",fire:"999",ambulance:"999"},IT:{name:"Italy",police:"113",fire:"115",ambulance:"118"},ES:{name:"Spain",police:"091",fire:"080",ambulance:"061"},NL:{name:"Netherlands",police:"112",fire:"112",ambulance:"112"},PT:{name:"Portugal",police:"112",fire:"112",ambulance:"112"},CH:{name:"Switzerland",police:"117",fire:"118",ambulance:"144"},AT:{name:"Austria",police:"133",fire:"122",ambulance:"144"},BE:{name:"Belgium",police:"101",fire:"100",ambulance:"100"},PL:{name:"Poland",police:"112",fire:"998",ambulance:"999"},CZ:{name:"Czechia",police:"158",fire:"150",ambulance:"155"},HU:{name:"Hungary",police:"107",fire:"105",ambulance:"104"},RO:{name:"Romania",police:"112",fire:"112",ambulance:"112"},GR:{name:"Greece",police:"100",fire:"199",ambulance:"166"},HR:{name:"Croatia",police:"192",fire:"193",ambulance:"194"},US:{name:"United States",police:"911",fire:"911",ambulance:"911"},CA:{name:"Canada",police:"911",fire:"911",ambulance:"911"},MX:{name:"Mexico",police:"911",fire:"911",ambulance:"911"},BR:{name:"Brazil",police:"190",fire:"193",ambulance:"192"},AR:{name:"Argentina",police:"101",fire:"100",ambulance:"107"},JP:{name:"Japan",police:"110",fire:"119",ambulance:"119",embassy_hint:"Your country's embassy in Tokyo: search 'embassy Tokyo [country]'"},CN:{name:"China",police:"110",fire:"119",ambulance:"120",embassy_hint:"Emergency hotline for foreigners: 12348"},KR:{name:"South Korea",police:"112",fire:"119",ambulance:"119",embassy_hint:"Tourist helpline: 1330 (24h, English)"},TH:{name:"Thailand",police:"191",fire:"199",ambulance:"1669",embassy_hint:"Tourist police: 1155"},SG:{name:"Singapore",police:"999",fire:"995",ambulance:"995"},MY:{name:"Malaysia",police:"999",fire:"994",ambulance:"999"},ID:{name:"Indonesia",police:"110",fire:"113",ambulance:"118"},VN:{name:"Vietnam",police:"113",fire:"114",ambulance:"115"},PH:{name:"Philippines",police:"911",fire:"911",ambulance:"911"},IN:{name:"India",police:"100",fire:"101",ambulance:"102"},NP:{name:"Nepal",police:"100",fire:"101",ambulance:"102"},AU:{name:"Australia",police:"000",fire:"000",ambulance:"000"},NZ:{name:"New Zealand",police:"111",fire:"111",ambulance:"111"},AE:{name:"UAE",police:"999",fire:"997",ambulance:"998"},TR:{name:"Turkey",police:"155",fire:"110",ambulance:"112"},EG:{name:"Egypt",police:"122",fire:"180",ambulance:"123"},ZA:{name:"South Africa",police:"10111",fire:"10177",ambulance:"10177"},KE:{name:"Kenya",police:"999",fire:"999",ambulance:"999"},MA:{name:"Morocco",police:"19",fire:"15",ambulance:"15"},MN:{name:"Mongolia",police:"102",fire:"101",ambulance:"103"}};
+
+var pending={},reqCounter=0,tripId=null,tripStart=null,tripEnd=null;
+var allVisas=[],detectedCountries=[],detectedAirlines=[],detectedAirlineRaw=[];
+var dutyCountries=[],luggageEntries=[];
+
+function invoke(sub,method,body){
+  return new Promise(function(res,rej){
+    var id=String(++reqCounter);pending[id]={resolve:res,reject:rej};
+    window.parent.postMessage({type:'trek:invoke',requestId:id,sub:sub,method:method||'GET',body:body},'*');
+  });
+}
+window.addEventListener('message',function(e){
+  if(e.source!==window.parent)return;
+  var m=e.data;if(!m||typeof m!=='object')return;
+  if(m.type==='trek:context')onContext(m);
+  else if(m.type==='trek:response'){var p=pending[m.requestId];if(p){delete pending[m.requestId];p.resolve(m.data);}}
+  else if(m.type==='trek:error'){var p2=pending[m.requestId];if(p2){delete pending[m.requestId];p2.reject(new Error(m.message||'failed'));}}
+});
+function rh(){window.parent.postMessage({type:'trek:resize',height:Math.max(document.body.scrollHeight+24,400)},'*');}
+
+function switchTab(t){
+  ['overview','visa','holidays','weather','safety','health','culture','connectivity','duty','luggage','emergency'].forEach(function(n){
+    document.getElementById('pane-'+n).classList.toggle('active',n===t);
+    document.getElementById('tab-'+n).classList.toggle('active',n===t);
+  });rh();
+}
+
+// ══ AI Briefings ══
+var briefingCache={};
+var currentBriefingCountry='',currentBriefingName='',currentBriefingMonth='';
+var SECTIONS=['overview','safety','health','culture','connectivity'];
+var currentBriefingData=null;
+
+async function loadBriefings(cc,name){
+  if(!cc)return;
+  currentBriefingCountry=cc;currentBriefingName=name||COUNTRIES[cc]||cc;
+
+  function getTarget(s){return document.getElementById('briefing-content-'+s)||document.getElementById('pane-'+s+'-content');}
+  SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='<div class="b-skeleton"></div><div class="b-skeleton" style="height:100px;"></div>';});
+
+  try{
+    var data=await invoke('/briefing?country='+encodeURIComponent(cc)+'&section=all','GET');
+    if(data.error){
+      SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='<div class="status-text error">'+data.error+'</div>';});
+      rh();return;
+    }
+    var curatedMsg='<div class="status-text">No curated reference data for '+(COUNTRIES[cc]||cc)+' yet.</div>'+
+      (data.availableCountries?'<div class="b-gen-note">Curated destinations available: '+data.availableCountries.map(function(c){return COUNTRIES[c]||c;}).join(', ')+'</div>':'');
+
+    var ot=getTarget('overview');
+    if(ot){
+      if(data.overview){
+        ot.innerHTML='';renderOverview(ot,data.overview,data.name);
+        if(data.transport)renderTransport(ot,data.transport);
+        if(data.food)renderFood(ot,data.food);
+        var note=document.createElement('div');note.className='b-gen-note';note.textContent='Curated reference data — always verify current conditions before travel.';ot.appendChild(note);
+      } else ot.innerHTML=curatedMsg;
+    }
+    var ht=getTarget('health');
+    if(ht){if(data.health){ht.innerHTML='';renderHealth(ht,data.health);}else ht.innerHTML=curatedMsg;}
+
+    // Safety, Culture, and Connectivity always render even with no curated
+    // destinations.js entry — they're backed (fully or partly) by live
+    // sources (GDACS, Wikivoyage, IEC plugs) that don't need curated data.
+    var stt=getTarget('safety');if(stt){stt.innerHTML='';renderSafety(stt,data.safety||{},cc);}
+    var clt=getTarget('culture');if(clt){clt.innerHTML='';renderCulture(clt,data.culture||{},cc);}
+    var cnt=getTarget('connectivity');if(cnt){cnt.innerHTML='';renderConnectivity(cnt,data.connectivity||{});}
+  }catch(e){
+    SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='<div class="status-text error">Failed: '+e.message+'</div>';});
+  }
+  rh();
+}
+
+// Keep generateAllBriefings as alias for loadBriefings for any remaining onclick refs
+function generateAllBriefings(){
+  var cc=document.getElementById('val-ai-country').value||currentBriefingCountry;
+  var name=document.getElementById('val-ai-country-name').value||currentBriefingName||COUNTRIES[cc]||cc;
+  loadBriefings(cc,name);
+}
+
+function renderTransport(el,d){
+  if(!d)return;
+  var grid=document.createElement('div');grid.className='briefing-grid';
+  if(d.gettingAround){
+    var c=bcard('Getting around','MODES & TYPICAL USE');
+    d.gettingAround.forEach(function(o){
+      var opt=document.createElement('div');opt.className='b-conn-option';
+      var t=document.createElement('div');t.className='b-conn-type';t.textContent=o.type;
+      var det=document.createElement('div');det.className='b-conn-detail';det.textContent=o.detail;
+      opt.appendChild(t);opt.appendChild(det);c.appendChild(opt);
+    });
+    grid.appendChild(c);
+  }
+  if(d.airportArrivals){
+    var c=bcard('Airport arrivals','FROM THE AIRPORT');
+    c.appendChild(blist(d.airportArrivals));grid.appendChild(c);
+  }
+  el.appendChild(grid);
+}
+
+function renderFood(el,d){
+  if(!d)return;
+  var grid=document.createElement('div');grid.className='briefing-grid';
+  if(d.mustTry){
+    var c=bcard('Must try','LOCAL HIGHLIGHTS');
+    c.appendChild(blist(d.mustTry));grid.appendChild(c);
+  }
+  if(d.dietary){
+    var c=bcard('Dietary info','FOR SPECIAL DIETS');
+    var b=document.createElement('div');b.className='b-card-body';b.textContent=d.dietary;c.appendChild(b);
+    grid.appendChild(c);
+  }
+  el.appendChild(grid);
+}
+
+function bcard(title,subtitle){
+  var c=document.createElement('div');c.className='b-card';
+  if(title){var t=document.createElement('div');t.className='b-card-title';t.textContent=title;c.appendChild(t);}
+  if(subtitle){var s=document.createElement('div');s.className='b-card-subtitle';s.textContent=subtitle;c.appendChild(s);}
+  return c;
+}
+function blist(items,warn){
+  var ul=document.createElement('ul');ul.className='b-list';
+  (items||[]).forEach(function(item){var li=document.createElement('li');if(warn)li.className='warn';li.textContent=item;ul.appendChild(li);});
+  return ul;
+}
+function bstat(label,value,color){
+  var d=document.createElement('div');d.className='b-stat '+(color||'neutral');
+  var l=document.createElement('div');l.className='b-stat-label';l.textContent=label;
+  var v=document.createElement('div');v.className='b-stat-value';v.textContent=value;
+  d.appendChild(l);d.appendChild(v);return d;
+}
+
+function renderOverview(el,d,name){
+  var grid=document.createElement('div');grid.className='briefing-grid';
+  if(d.whyNow){
+    var c=bcard(d.whyNow.title,'HIGHLIGHTS');
+    var b=document.createElement('div');b.className='b-card-body';b.textContent=d.whyNow.body;c.appendChild(b);
+    grid.appendChild(c);
+  }
+  if(d.bestFor){
+    var c=bcard('Best for','WHAT TRAVELERS LOVE');
+    c.appendChild(blist(d.bestFor));grid.appendChild(c);
+  }
+  if(d.headsUp){
+    var c=bcard('Heads-up','TIMING & WATCH-OUTS');
+    c.appendChild(blist(d.headsUp,true));grid.appendChild(c);
+  }
+  el.appendChild(grid);
+  var note=document.createElement('div');note.className='b-gen-note';note.textContent='Curated reference data — always verify current conditions before travel.';el.appendChild(note);
+}
+
+async function loadHazards(cc,targetEl){
+  try{
+    var data=await invoke('/hazards?country='+encodeURIComponent(cc),'GET');
+    if(data.error){targetEl.innerHTML='';targetEl.appendChild(blist(['Could not load live hazard alerts: '+data.error]));return;}
+    if(!data.events||!data.events.length){targetEl.textContent='No active GDACS alerts for this country right now.';return;}
+    targetEl.innerHTML='';
+    var ul=document.createElement('ul');ul.className='b-list';
+    data.events.slice(0,8).forEach(function(ev){
+      var li=document.createElement('li');
+      if(ev.alertLevel==='Orange'||ev.alertLevel==='Red')li.className='warn';
+      li.textContent=ev.typeLabel+': '+ev.name+(ev.date?' ('+ev.date.slice(0,10)+')':'');
+      ul.appendChild(li);
+    });
+    targetEl.appendChild(ul);
+    var src=document.createElement('div');src.className='b-gen-note';src.textContent='Live current alerts from GDACS (Global Disaster Alert and Coordination System).';
+    targetEl.appendChild(src);
+  }catch(e){targetEl.textContent='Failed to load hazard alerts.';}
+  rh();
+}
+function renderSafety(el,d,cc){
+  var grid=document.createElement('div');grid.className='briefing-grid';
+  if(d.advisory){
+    var lvl=d.advisory.level||1;
+    var wrap=bcard('Travel advisory','GOVERNMENT GUIDANCE');wrap.classList.add('full-width');
+    var adv=document.createElement('div');adv.className='b-advisory level'+lvl;
+    var circle=document.createElement('div');circle.className='b-advisory-level';circle.textContent=lvl;
+    var text=document.createElement('div');text.className='b-advisory-text';
+    var t=document.createElement('div');t.className='b-advisory-title';t.textContent=d.advisory.levelText||'';
+    var b=document.createElement('div');b.className='b-advisory-body';b.textContent=d.advisory.body||'';
+    text.appendChild(t);text.appendChild(b);adv.appendChild(circle);adv.appendChild(text);wrap.appendChild(adv);
+    var sg=document.createElement('div');sg.className='b-stat-grid';
+    sg.appendChild(bstat('Crime Index',d.crimeIndex||'—','green'));
+    sg.appendChild(bstat('Solo Travel',d.soloTravel||'—','blue'));
+    if(d.naturalRisk){var nr=document.createElement('div');nr.className='b-stat neutral';nr.style.gridColumn='1/-1';var nl=document.createElement('div');nl.className='b-stat-label';nl.textContent='Natural Risk';var nv=document.createElement('div');nv.className='b-stat-value';nv.textContent=d.naturalRisk;nr.appendChild(nl);nr.appendChild(nv);sg.appendChild(nr);}
+    wrap.appendChild(sg);grid.appendChild(wrap);
+  }
+  var hazardCard=bcard('Natural hazards','LIVE ALERTS — GDACS');
+  var hazardBody=document.createElement('div');hazardBody.className='b-card-body';hazardBody.textContent='Loading current alerts…';
+  hazardCard.appendChild(hazardBody);grid.appendChild(hazardCard);
+  if(cc)loadHazards(cc,hazardBody);else hazardBody.textContent='No country selected.';
+  if(d.scams){var c=bcard('Common scams','WATCH OUT FOR');c.appendChild(blist(d.scams));grid.appendChild(c);}
+  el.appendChild(grid);
+}
+
+function renderHealth(el,d){
+  var grid=document.createElement('div');grid.className='briefing-grid';
+  if(d.vaccines){
+    var c=bcard('Vaccinations & health','CDC / WHO GUIDANCE');
+    var sg=document.createElement('div');sg.className='b-stat-grid';
+    sg.appendChild(bstat('Routine Vaccines',d.vaccines.routine||'Up to date','green'));
+    sg.appendChild(bstat('Hepatitis A',d.vaccines.hepatitisA||'—','amber'));
+    if(d.vaccines.otherVaccine){sg.appendChild(bstat(d.vaccines.otherVaccine,d.vaccines.otherVaccineNote||'—','purple'));}
+    sg.appendChild(bstat('Tap Water',d.tapWater||'—','blue'));
+    if(d.mosquitoRisk){sg.appendChild(bstat('Mosquito Risk',d.mosquitoRisk,'neutral'));}
+    c.appendChild(sg);grid.appendChild(c);
+  }
+  if(d.waterFood){var c=bcard('Water & food','SAFETY OF CONSUMPTION');c.appendChild(blist(d.waterFood));grid.appendChild(c);}
+  if(d.healthcare){var c=bcard('Healthcare','IF SOMETHING HAPPENS');c.appendChild(blist(d.healthcare));grid.appendChild(c);}
+  el.appendChild(grid);
+}
+
+function renderProseBullets(container,data){
+  (data.paragraphs||[]).forEach(function(p){
+    var b=document.createElement('div');b.className='b-card-body';b.style.marginBottom='8px';b.textContent=p;container.appendChild(b);
+  });
+  if(data.bullets&&data.bullets.length)container.appendChild(blist(data.bullets));
+}
+async function loadEtiquette(cc,respectEl,tippingEl){
+  try{
+    var title=COUNTRIES[cc]||cc;
+    var data=await invoke('/etiquette?title='+encodeURIComponent(title),'GET');
+    if(!data.available){
+      respectEl.textContent=data.message||'No etiquette data found for '+title+'.';
+      if(tippingEl)tippingEl.textContent='';
+      rh();return;
+    }
+    respectEl.innerHTML='';renderProseBullets(respectEl,data.respect||{});
+    var src=document.createElement('div');src.className='b-gen-note';src.textContent='From Wikivoyage — content may be incomplete or out of date; verify locally.';respectEl.appendChild(src);
+    if(tippingEl){
+      tippingEl.innerHTML='';
+      if(data.tipping&&((data.tipping.paragraphs||[]).length||(data.tipping.bullets||[]).length))renderProseBullets(tippingEl,data.tipping);
+      else tippingEl.textContent='No separate tipping section found — check the etiquette notes.';
+    }
+  }catch(e){respectEl.textContent='Failed to load etiquette data.';if(tippingEl)tippingEl.textContent='';}
+  rh();
+}
+function renderCulture(el,d,cc){
+  var grid=document.createElement('div');grid.className='briefing-grid';
+  var respectCard=bcard('Etiquette & respect','LIVE — WIKIVOYAGE');
+  var respectBody=document.createElement('div');respectBody.className='b-card-body';respectBody.textContent='Loading…';respectCard.appendChild(respectBody);grid.appendChild(respectCard);
+  var tippingCard=bcard('Tipping & service','LIVE — WIKIVOYAGE');
+  var tippingBody=document.createElement('div');tippingBody.className='b-card-body';tippingBody.textContent='Loading…';tippingCard.appendChild(tippingBody);grid.appendChild(tippingCard);
+  if(cc)loadEtiquette(cc,respectBody,tippingBody);
+  else{respectBody.textContent='No country selected.';tippingBody.textContent='';}
+  if(d.phrases){
+    var c=bcard('Useful phrases','QUICK REFERENCE');
+    var pg=document.createElement('div');pg.className='b-phrase-grid';
+    d.phrases.forEach(function(p){
+      var row=document.createElement('div');row.className='b-phrase';
+      var pt=document.createElement('span');pt.className='b-phrase-text';pt.textContent=p.phrase;
+      var pm=document.createElement('span');pm.className='b-phrase-meaning';pm.textContent=p.meaning;
+      row.appendChild(pt);row.appendChild(pm);pg.appendChild(row);
+    });
+    c.appendChild(pg);grid.appendChild(c);
+  }
+  el.appendChild(grid);
+}
+
+function renderConnectivity(el,d){
+  var grid=document.createElement('div');grid.className='briefing-grid';
+  if(d.online){
+    var c=bcard(d.online.title||'Staying online',d.online.subtitle||'DATA & WIFI');
+    d.online.forEach(function(o){
+      var opt=document.createElement('div');opt.className='b-conn-option';
+      var t=document.createElement('div');t.className='b-conn-type';t.textContent=o.type;
+      var det=document.createElement('div');det.className='b-conn-detail';det.textContent=o.detail;
+      opt.appendChild(t);opt.appendChild(det);c.appendChild(opt);
+    });
+    grid.appendChild(c);
+  }
+  if(d.power){
+    var c=bcard('Power & plugs','ELECTRICITY BASICS');
+    var pg=document.createElement('div');pg.className='b-power-grid';
+    [['Voltage',d.power.voltage],['Frequency',d.power.frequency],['Plug Type',d.power.plugType]].forEach(function(pair){
+      var cell=document.createElement('div');cell.className='b-power-cell';
+      var l=document.createElement('div');l.className='b-power-label';l.textContent=pair[0];
+      var v=document.createElement('div');v.className='b-power-value';v.textContent=pair[1]||'—';
+      cell.appendChild(l);cell.appendChild(v);pg.appendChild(cell);
+    });
+    c.appendChild(pg);
+    if(d.power.note){var n=document.createElement('div');n.style.cssText='font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.5;';n.textContent=d.power.note;c.appendChild(n);}
+    grid.appendChild(c);
+  }
+  if(!grid.children.length){el.innerHTML='<div class="status-text">No connectivity data for this destination yet.</div>';return;}
+  el.appendChild(grid);
+}
+
+// ══ Hero ══
+function renderHero(data){
+  var hero=document.getElementById('hero');
+  document.getElementById('hero-title').textContent=data.title||'Trip Research';
+  if(data.startDate&&data.endDate){
+    document.getElementById('hero-dates').textContent=data.startDate+' → '+data.endDate;
+    var start=new Date(data.startDate),end=new Date(data.endDate),now=new Date();
+    var daysUntil=Math.ceil((start-now)/86400000);
+    var duration=Math.ceil((end-start)/86400000)+1;
+    var countEl=document.getElementById('hero-countdown');
+    var labelEl=document.getElementById('hero-countdown-label');
+    if(daysUntil>0){countEl.textContent=daysUntil;labelEl.textContent='days until departure';}
+    else if(daysUntil<=0&&daysUntil>-duration){countEl.textContent='✈';labelEl.textContent='Trip is underway!';}
+    else{countEl.textContent=duration;labelEl.textContent='days duration';}
+    document.getElementById('hero-duration').textContent=duration+' days';
+  }
+  var pills=document.getElementById('hero-pills');pills.innerHTML='';
+  // Country pills — click to auto-fill all country fields and switch to Visa tab
+  detectedCountries.forEach(function(c){
+    var p=document.createElement('button');p.className='hero-pill';
+    p.title='Click to research '+( COUNTRIES[c.countryCode]||c.countryCode);
+    p.style.cursor='pointer';p.style.border='none';
+    p.textContent=(COUNTRIES[c.countryCode]||c.countryCode);
+    p.addEventListener('click',function(){
+      setDD('dest',c.countryCode);
+      setDD('hol',c.countryCode);
+      setDD('wx',c.countryCode);
+      if(c.name)document.getElementById('wx-city').value=c.name;
+      if(dutyCountries.indexOf(c.countryCode)===-1)addDutyCountry(c.countryCode);
+      // Load briefings for clicked country
+      setDD('ai-country',c.countryCode);
+      currentBriefingCountry=c.countryCode;
+      currentBriefingName=COUNTRIES[c.countryCode]||c.countryCode;
+      document.getElementById('val-ai-country-name').value=currentBriefingName;
+      loadBriefings(c.countryCode,currentBriefingName);
+    });
+    pills.appendChild(p);
+  });
+  // Airline pills — click to switch to luggage tab
+  detectedAirlines.forEach(function(a){
+    var p=document.createElement('button');p.className='hero-pill airline';
+    p.title='Click to go to Luggage tab';
+    p.style.cursor='pointer';p.style.border='none';
+    p.textContent='✈ '+a;
+    p.addEventListener('click',function(){switchTab('luggage');});
+    pills.appendChild(p);
+  });
+  hero.style.display='flex';rh();
+}
+
+// ══ Country dropdown ══
+var dropdowns={};
+function initDropdown(id,onSelect){
+  var btn=document.getElementById('btn-'+id),dd=document.getElementById('dd-'+id);
+  var search=document.getElementById('search-'+id),list=document.getElementById('list-'+id);
+  var lbl=document.getElementById('lbl-'+id),val=document.getElementById('val-'+id);
+  dropdowns[id]={btn,dd,search,list,lbl,val};
+  function render(f){
+    list.innerHTML='';
+    Object.entries(COUNTRIES).filter(function(e){if(!f)return true;var q=f.toLowerCase();return e[0].toLowerCase().includes(q)||e[1].toLowerCase().includes(q);}).slice(0,80).forEach(function(e){
+      var opt=document.createElement('div');opt.className='country-opt';
+      opt.innerHTML='<span class="code">'+e[0]+'</span>'+e[1];
+      opt.addEventListener('mousedown',function(ev){ev.preventDefault();val.value=e[0];lbl.textContent=e[1]+' ('+e[0]+')';dd.classList.remove('open');search.value='';render('');if(onSelect)onSelect(e[0],e[1]);rh();});
+      list.appendChild(opt);
+    });
+  }
+  btn.addEventListener('click',function(e){e.stopPropagation();var o=dd.classList.contains('open');closeAllDDs();if(!o){dd.classList.add('open');search.focus();render('');}rh();});
+  search.addEventListener('input',function(){render(this.value);});
+  render('');
+}
+function closeAllDDs(){Object.values(dropdowns).forEach(function(d){d.dd.classList.remove('open');});}
+document.addEventListener('click',function(){closeAllDDs();rh();});
+function setDD(id,code){var d=dropdowns[id];if(!d)return;var n=COUNTRIES[code]||code;d.val.value=code;d.lbl.textContent=n+' ('+code+')';}
+
+initDropdown('passport');initDropdown('dest');
+initDropdown('hol');  // removed auto-click — was firing before dates were filled
+initDropdown('wx');initDropdown('duty-add');
+initDropdown('ai-country',function(code,name){
+  currentBriefingCountry=code;
+  currentBriefingName=name||COUNTRIES[code]||code;
+  document.getElementById('val-ai-country-name').value=currentBriefingName;
+  loadBriefings(code,currentBriefingName);
+});
+
+// ══ VISA ══
+function visaBadgeClass(cat){if(!cat)return'visa-other';var c=cat.toLowerCase();if(c.includes('free'))return'visa-free';if(c.includes('arrival'))return'visa-arrival';if(c.includes('e-visa')||c.includes('eta'))return'visa-evisa';if(c.includes('required')||c.includes('admission'))return'visa-required';return'visa-other';}
+function renderVisas(visas){
+  var el=document.getElementById('visa-results');el.innerHTML='';
+  if(!visas.length){el.innerHTML='<div class="status-text">No results.</div>';rh();return;}
+  visas.forEach(function(v){
+    var card=document.createElement('div');card.className='visa-card';
+    var top=document.createElement('div');top.className='visa-card-top';
+    var nameWrap=document.createElement('div');
+    var name=document.createElement('div');name.className='visa-country-name';name.textContent=COUNTRIES[v.dest]||v.dest;
+    var code=document.createElement('div');code.className='visa-country-code';code.textContent=v.dest;
+    nameWrap.appendChild(name);nameWrap.appendChild(code);
+    var badge=document.createElement('div');badge.className='visa-badge '+visaBadgeClass(v.category);badge.textContent=v.category||'Unknown';
+    top.appendChild(nameWrap);top.appendChild(badge);card.appendChild(top);
+    if(v.days){var d=document.createElement('div');d.className='visa-days';d.textContent='Stay up to '+v.days+' days';card.appendChild(d);}
+    el.appendChild(card);
+  });rh();
+}
+function applyVisaFilters(){var cat=document.getElementById('visa-cat-filter').value;var vis=allVisas.filter(function(v){return!cat||v.category===cat;});document.getElementById('visa-count').textContent=vis.length+' of '+allVisas.length;renderVisas(vis);}
+document.getElementById('visa-cat-filter').addEventListener('change',applyVisaFilters);
+document.getElementById('visa-btn').addEventListener('click',async function(){
+  var btn=this,passport=document.getElementById('val-passport').value.trim().toUpperCase(),dest=document.getElementById('val-dest').value.trim().toUpperCase();
+  if(!passport){document.getElementById('visa-results').innerHTML='<div class="status-text error">Select your passport country first.</div>';return;}
+  btn.disabled=true;btn.textContent='Loading…';
+  document.getElementById('visa-results').innerHTML='<div class="status-text">Loading…</div>';
+  document.getElementById('visa-filter-row').style.display='none';
+  try{
+    var data=await invoke('/visa?passport='+encodeURIComponent(passport)+(dest?'&dest='+encodeURIComponent(dest):''),'GET');
+    if(data.error){document.getElementById('visa-results').innerHTML='<div class="status-text error">'+data.error+'</div>';return;}
+    allVisas=data.dest?[data]:(data.visas||[]);
+    if(allVisas.length>1){document.getElementById('visa-filter-row').style.display='flex';document.getElementById('visa-count').textContent=allVisas.length;}
+    renderVisas(allVisas);
+  }catch(e){document.getElementById('visa-results').innerHTML='<div class="status-text error">'+e.message+'</div>';}
+  finally{btn.disabled=false;btn.textContent='Look up';rh();}
+});
+
+// ══ HOLIDAYS ══
+function wday(d){return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d+'T12:00:00Z').getUTCDay()];}
+document.getElementById('hol-btn').addEventListener('click',async function(){
+  var btn=this,cc=document.getElementById('val-hol').value.trim().toUpperCase();
+  var sd=document.getElementById('hol-start').value||tripStart||'',ed=document.getElementById('hol-end').value||tripEnd||'';
+  if(!cc){document.getElementById('hol-results').innerHTML='<div class="status-text error">Select a country first.</div>';return;}
+  btn.disabled=true;btn.textContent='Loading…';
+  var el=document.getElementById('hol-results');el.innerHTML='<div class="status-text">Fetching…</div>';
+  try{
+    var data=await invoke('/holidays?countryCode='+cc+(sd?'&startDate='+sd:'')+(ed?'&endDate='+ed:''),'GET');
+    el.innerHTML='';
+    if(data.error){el.innerHTML='<div class="status-text error">'+data.error+'</div>';return;}
+    if(!data.holidays||!data.holidays.length){el.innerHTML='<div class="status-text">No public holidays in this date range for '+(COUNTRIES[cc]||cc)+'.</div>';return;}
+    var h=document.createElement('div');h.className='status-text';h.style.marginBottom='8px';
+    h.textContent=data.total+' public holiday'+(data.total===1?'':'s')+' in '+(COUNTRIES[cc]||cc);el.appendChild(h);
+    var list=document.createElement('div');list.className='holiday-list';
+    data.holidays.forEach(function(hol){
+      var row=document.createElement('div');row.className='holiday-row'+(hol.national?' national':'');
+      var date=document.createElement('div');date.className='holiday-date';date.textContent=hol.date+' '+wday(hol.date);
+      var name=document.createElement('div');name.className='holiday-name';name.textContent=hol.name;
+      if(hol.localName&&hol.localName!==hol.name){var ln=document.createElement('div');ln.className='holiday-local';ln.textContent=hol.localName;name.appendChild(ln);}
+      row.appendChild(date);row.appendChild(name);
+      if(hol.national){var nb=document.createElement('span');nb.className='nat-badge';nb.textContent='National';row.appendChild(nb);}
+      list.appendChild(row);
+    });
+    el.appendChild(list);
+  }catch(e){el.innerHTML='<div class="status-text error">'+e.message+'</div>';}
+  finally{btn.disabled=false;btn.textContent='Look up';rh();}
+});
+
+// ══ WEATHER ══
+function wxIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤';if(c===3)return'☁️';if(c<=49)return'🌫';if(c<=59)return'🌦';if(c<=69)return'🌧';if(c<=79)return'❄️';if(c<=82)return'🌦';if(c<=86)return'🌨';if(c<=99)return'⛈';return'🌡';}
+document.getElementById('wx-btn').addEventListener('click',async function(){
+  var btn=this,city=document.getElementById('wx-city').value.trim(),cc=document.getElementById('val-wx').value.trim().toUpperCase();
+  var sd=document.getElementById('wx-start').value||tripStart||'',ed=document.getElementById('wx-end').value||tripEnd||'';
+  if(!city){document.getElementById('wx-results').innerHTML='<div class="status-text error">Enter a city name.</div>';return;}
+  btn.disabled=true;btn.textContent='Loading…';
+  var el=document.getElementById('wx-results');el.innerHTML='<div class="status-text">Fetching forecast…</div>';
+  try{
+    var data=await invoke('/weather?city='+encodeURIComponent(city)+(cc?'&countryCode='+cc:'')+(sd?'&startDate='+sd:'')+(ed?'&endDate='+ed:''),'GET');
+    el.innerHTML='';
+    if(data.error){el.innerHTML='<div class="status-text error">'+data.error+'</div>';return;}
+    if(data.note){var note=document.createElement('div');note.className='note-bar';note.textContent='⚠ '+data.note;el.appendChild(note);}
+    // Summary stats
+    var days=data.days||[];
+    if(days.length){
+      var maxTemps=days.map(function(d){return d.maxTemp}).filter(function(t){return t!=null});
+      var minTemps=days.map(function(d){return d.minTemp}).filter(function(t){return t!=null});
+      var rainDays=days.filter(function(d){return d.precipitation>1}).length;
+      var sum=document.createElement('div');sum.className='weather-summary';
+      [[Math.round(Math.max.apply(null,maxTemps))+'°','Peak temp'],
+       [Math.round(Math.min.apply(null,minTemps))+'°','Coldest night'],
+       [rainDays+' days','Rain expected'],
+       [data.city,'Location']].forEach(function(pair){
+        var c=document.createElement('div');c.className='wx-sum-card';
+        var l=document.createElement('div');l.className='wx-sum-label';l.textContent=pair[1];
+        var v=document.createElement('div');v.className='wx-sum-value';v.textContent=pair[0];
+        c.appendChild(l);c.appendChild(v);sum.appendChild(c);
+      });
+      el.appendChild(sum);
+    }
+    var grid=document.createElement('div');grid.className='weather-grid';
+    days.forEach(function(d){
+      var card=document.createElement('div');card.className='weather-day';
+      var wd=new Date(d.date+'T12:00:00Z').getUTCDay();
+      if(wd===0||wd===6)card.classList.add('weekend');
+      var wdayEl=document.createElement('div');wdayEl.className='weather-wday';wdayEl.textContent=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][wd];card.appendChild(wdayEl);
+      var dateEl=document.createElement('div');dateEl.className='weather-date';dateEl.textContent=d.date.slice(5);card.appendChild(dateEl);
+      var icon=document.createElement('div');icon.className='weather-icon';icon.textContent=wxIcon(d.code);card.appendChild(icon);
+      var desc=document.createElement('div');desc.className='weather-desc';desc.textContent=d.description;card.appendChild(desc);
+      var temps=document.createElement('div');temps.className='weather-temps';temps.innerHTML=Math.round(d.maxTemp)+'° <span>'+Math.round(d.minTemp)+'°</span>';card.appendChild(temps);
+      if(d.precipitation>0){var r=document.createElement('div');r.className='weather-rain';r.textContent='💧'+d.precipitation.toFixed(1)+'mm';card.appendChild(r);}
+      grid.appendChild(card);
+    });
+    el.appendChild(grid);
+  }catch(e){el.innerHTML='<div class="status-text error">'+e.message+'</div>';}
+  finally{btn.disabled=false;btn.textContent='Forecast';rh();}
+});
+
+// ══ CURRENCY ══
+
+// ══ DUTY-FREE ══
+function renderDutyChips(){
+  var el=document.getElementById('duty-chips');el.innerHTML='';
+  if(!dutyCountries.length){el.innerHTML='<span class="empty-note">No countries yet — auto-populated from your trip or add manually below.</span>';renderDutyAllowances();return;}
+  dutyCountries.forEach(function(cc){
+    var chip=document.createElement('span');chip.className='chip';
+    var lbl=document.createElement('span');lbl.textContent=DUTY_FREE[cc]?DUTY_FREE[cc].name:(COUNTRIES[cc]||cc);
+    var btn=document.createElement('button');btn.textContent='×';btn.addEventListener('click',function(){removeDutyCountry(cc);});
+    chip.appendChild(lbl);chip.appendChild(btn);el.appendChild(chip);
+  });
+  renderDutyAllowances();
+}
+function renderDutyAllowances(){
+  var el=document.getElementById('duty-allowances');el.innerHTML='';
+  if(!dutyCountries.length){rh();return;}
+  dutyCountries.forEach(function(cc){
+    var info=DUTY_FREE[cc];
+    if(!info){var na=document.createElement('div');na.className='allowance-card';na.innerHTML='<div class="allowance-title">'+(COUNTRIES[cc]||cc)+'</div><div class="status-text">No data for this country yet.</div>';el.appendChild(na);return;}
+    var card=document.createElement('div');card.className='allowance-card';
+    var header=document.createElement('div');header.className='allowance-header';
+    var title=document.createElement('div');title.className='allowance-title';title.textContent=info.name;
+    var rem=document.createElement('button');rem.className='allowance-remove';rem.textContent='Remove';rem.addEventListener('click',function(){removeDutyCountry(cc);});
+    header.appendChild(title);header.appendChild(rem);card.appendChild(header);
+    var items=document.createElement('div');items.className='allowance-items';
+    [['🍷 Alcohol',info.alcohol],['🚬 Tobacco',info.tobacco],['🛍 Goods value',info.goods],['💵 Cash',info.cash]].forEach(function(pair){
+      var row=document.createElement('div');row.className='a-row';
+      var l=document.createElement('div');l.className='a-lbl';l.textContent=pair[0];
+      var v=document.createElement('div');v.className='a-val';v.textContent=pair[1];
+      row.appendChild(l);row.appendChild(v);items.appendChild(row);
+    });
+    if(info.note){var n=document.createElement('div');n.className='a-note';n.textContent=info.note;items.appendChild(n);}
+    card.appendChild(items);el.appendChild(card);
+  });rh();
+}
+async function persistDutyCountries(next){
+  try{var d=await invoke('/duty-free/countries','POST',{tripId:tripId,countries:next});dutyCountries=d.countries||[];renderDutyChips();}catch(_e){}
+}
+function addDutyCountry(cc){if(!cc||dutyCountries.indexOf(cc)!==-1)return;persistDutyCountries(dutyCountries.concat([cc]));}
+function removeDutyCountry(cc){persistDutyCountries(dutyCountries.filter(function(c){return c!==cc;}));}
+document.getElementById('duty-add-btn').addEventListener('click',function(){var cc=document.getElementById('val-duty-add').value;if(cc)addDutyCountry(cc);});
+
+// Map IATA codes to our curated limits data
+var AIRLINES_BY_IATA={
+  'SK':AIRLINES['SAS'],'W6':AIRLINES['Wizz Air'],'WZ':AIRLINES['Wizz Air'],
+  'FR':AIRLINES['Ryanair'],'U2':AIRLINES['easyJet'],'DY':AIRLINES['Norwegian'],
+  'LH':AIRLINES['Lufthansa'],'KL':AIRLINES['KLM'],'AF':AIRLINES['Air France'],
+  'BA':AIRLINES['British Airways'],'CA':AIRLINES['Air China'],
+  'NH':AIRLINES['ANA'],'JL':AIRLINES['JAL'],'SQ':AIRLINES['Singapore Airlines'],
+  'EK':AIRLINES['Emirates'],'QR':AIRLINES['Qatar Airways'],
+  'TK':AIRLINES['Turkish Airlines'],'QF':AIRLINES['Qantas'],'CX':AIRLINES['Cathay Pacific']
+};
+var AIRLINE_CANONICAL_NAMES={
+  'Scandinavian Airlines System':AIRLINES['SAS'],
+  'SAS Braathens':AIRLINES['SAS'],
+  'Wizz Air Hungary':AIRLINES['Wizz Air'],
+  'Wizz Air Ukraine':AIRLINES['Wizz Air'],
+  'All Nippon Airways':AIRLINES['ANA'],
+  'Japan Airlines':AIRLINES['JAL'],
+  'easyJet Airline':AIRLINES['easyJet']
+};
+function getAirlineInfo(name,iata){
+  if(!name)return null;
+  if(AIRLINES[name])return AIRLINES[name];
+  if(AIRLINE_CANONICAL_NAMES[name])return AIRLINE_CANONICAL_NAMES[name];
+  if(iata&&AIRLINES_BY_IATA[iata])return AIRLINES_BY_IATA[iata];
+  var lower=name.toLowerCase();
+  for(var key in AIRLINES){var kl=key.toLowerCase();if(lower.includes(kl)||kl.includes(lower))return AIRLINES[key];}
+  return null;
+}
+var airlineSearchResults=[], selectedAirlineName='', selectedAirlineIata='', detectedAirlineSet=new Set();
+
+function initAirlineSearch(){
+  var input=document.getElementById('lg-airline-search');
+  var dd=document.getElementById('lg-airline-dd');
+  var hidden=document.getElementById('lg-airline-value');
+  var debounce=null;
+
+  // Pre-populate with detected airlines on focus if empty
+  input.addEventListener('focus',function(){
+    if(!this.value.trim())loadAirlines('',true);
+  });
+  input.addEventListener('input',function(){
+    selectedAirlineName='';hidden.value='';
+    clearTimeout(debounce);
+    var q=this.value.trim();
+    debounce=setTimeout(function(){loadAirlines(q,false);},200);
+  });
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){dd.style.display='none';}
+  });
+  document.addEventListener('click',function(e){
+    if(!e.target.closest||!e.target.closest('#lg-airline-dd')&&e.target!==input){dd.style.display='none';}
+  });
+}
+
+async function loadAirlines(query, showDetectedFirst){
+  var dd=document.getElementById('lg-airline-dd');
+  dd.innerHTML='<div style="padding:8px 10px;font-size:12px;color:var(--text-faint);">Loading…</div>';
+  dd.style.display='block';
+  try{
+    var detectedParam=detectedAirlines.map(function(a){return encodeURIComponent(a.toLowerCase())}).join(',');
+    var qs='/airlines/search?q='+encodeURIComponent(query);
+    if(detectedParam)qs+='&detected='+detectedParam;
+    var data=await invoke(qs,'GET');
+    var airlines=data.airlines||[];
+    renderAirlineDropdown(airlines, showDetectedFirst);
+  }catch(_e){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:12px;color:var(--danger);">Failed to load airlines</div>';
+  }
+}
+
+function renderAirlineDropdown(airlines, showDetectedFirst){
+  var dd=document.getElementById('lg-airline-dd');
+  dd.innerHTML='';
+  if(!airlines.length){dd.innerHTML='<div style="padding:8px 10px;font-size:12px;color:var(--text-faint);">No airlines found</div>';return;}
+
+  // Show detected airlines at top if requested
+  var detected=[], rest=[];
+  airlines.forEach(function(a){
+    if(detectedAirlineSet.has(a.name)||detectedAirlineSet.has(a.iata))detected.push(a);
+    else rest.push(a);
+  });
+  var ordered=showDetectedFirst?detected.concat(rest):airlines;
+
+  if(showDetectedFirst&&detected.length){
+    var hdr=document.createElement('div');
+    hdr.style.cssText='padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-faint);letter-spacing:.04em;background:var(--bg-secondary);';
+    hdr.textContent='From your trip';dd.appendChild(hdr);
+  }
+
+  ordered.slice(0,50).forEach(function(a,idx){
+    if(showDetectedFirst&&idx===detected.length&&detected.length){
+      var hdr2=document.createElement('div');
+      hdr2.style.cssText='padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-faint);letter-spacing:.04em;background:var(--bg-secondary);border-top:1px solid #e5e7eb;';
+      hdr2.textContent='All airlines';dd.appendChild(hdr2);
+    }
+    var opt=document.createElement('div');
+    opt.style.cssText='padding:7px 10px;font-size:12.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
+    opt.addEventListener('mouseover',function(){this.style.background='#f3f4f6';});
+    opt.addEventListener('mouseout',function(){this.style.background='';});
+    var name=document.createElement('span');name.textContent=a.name;
+    var meta=document.createElement('span');meta.style.cssText='font-size:10px;color:var(--text-faint);';
+    meta.textContent=(a.iata?a.iata+' · ':'')+a.country;
+    if(detectedAirlineSet.has(a.name)){var tag=document.createElement('span');tag.style.cssText='font-size:9px;font-weight:700;background:#dcfce7;color:#15803d;border-radius:4px;padding:1px 5px;margin-left:4px;';tag.textContent='trip';name.appendChild(tag);}
+    opt.appendChild(name);opt.appendChild(meta);
+    opt.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      selectedAirlineName=a.name;
+      selectedAirlineIata=a.iata||'';
+      document.getElementById('lg-airline-search').value=a.name+(a.iata?' ('+a.iata+')':'');
+      document.getElementById('lg-airline-value').value=a.name;
+      dd.style.display='none';
+    });
+    dd.appendChild(opt);
+  });
+  dd.style.display='block';
+}
+
+function getSelectedAirline(){
+  // If user selected from dropdown, use that. Otherwise try to match typed text.
+  if(selectedAirlineName)return selectedAirlineName;
+  var typed=document.getElementById('lg-airline-search').value.trim();
+  // Strip the "(IATA)" suffix if present
+  return typed.replace(/\s*\([A-Z0-9]+\)\s*$/,'').trim();
+}
+function renderLuggageEntries(){
+  var el=document.getElementById('lg-entries');el.innerHTML='';
+  if(!luggageEntries.length){el.innerHTML='<div class="empty-note">No travelers added yet.</div>';renderLuggageSummary();return;}
+  luggageEntries.forEach(function(entry,idx){
+    var info=getAirlineInfo(entry.airline,entry.iata);
+    var card=document.createElement('div');card.className='entry-card';
+    var header=document.createElement('div');header.className='entry-header';
+    var left=document.createElement('div');
+    var name=document.createElement('div');name.className='entry-name';name.textContent=entry.name;
+    var airline=document.createElement('div');airline.className='entry-airline';airline.textContent=entry.airline;
+    if(detectedAirlines.indexOf(entry.airline)!==-1){var tag=document.createElement('span');tag.className='auto-tag';tag.textContent='from trip';airline.appendChild(tag);}
+    left.appendChild(name);left.appendChild(airline);
+    var rem=document.createElement('button');rem.className='entry-remove';rem.textContent='Remove';rem.addEventListener('click',function(){removeLuggageEntry(idx);});
+    header.appendChild(left);header.appendChild(rem);card.appendChild(header);
+    if(info){
+      var list=document.createElement('div');list.className='limits-list';
+      [['Carry-on size',info.co],['Carry-on weight',info.ck?info.ck+' kg':'No limit'],['Checked size',info.dc],['Checked bag',info.dk+' kg'+(info.di?' (included)':' (add-on)')]].forEach(function(pair){
+        var row=document.createElement('div');row.className='l-row';
+        var l=document.createElement('span');l.className='l-lbl';l.textContent=pair[0];
+        var v=document.createElement('span');v.className='l-val';v.textContent=pair[1];
+        row.appendChild(l);row.appendChild(v);list.appendChild(row);
+      });
+      if(info.note){var n=document.createElement('div');n.className='fare-note';n.textContent=info.note;list.appendChild(n);}
+      card.appendChild(list);
+    }
+    el.appendChild(card);
+  });
+  renderLuggageSummary();
+}
+function renderLuggageSummary(){
+  var el=document.getElementById('lg-summary');el.innerHTML='';
+  var withInfo=luggageEntries.map(function(e){return getAirlineInfo(e.airline,e.iata);}).filter(Boolean);
+  if(withInfo.length<2){rh();return;}
+  var cw=withInfo.map(function(i){return i.ck;}).filter(function(w){return w!=null;});
+  var minCW=cw.length?Math.min.apply(null,cw):null;
+  var minDW=Math.min.apply(null,withInfo.map(function(i){return i.dk;}));
+  var anyNoDI=withInfo.some(function(i){return!i.di;});
+  var card=document.createElement('div');card.className='summary-card';
+  var title=document.createElement('div');title.className='summary-title';title.textContent='Group limit — pack to the strictest:';card.appendChild(title);
+  var items=[];
+  if(minCW!=null)items.push('Carry-on: <strong>'+minCW+' kg</strong> max');
+  items.push('Checked bag: <strong>'+minDW+' kg</strong> max');
+  if(anyNoDI)items.push('<strong>⚠ At least one fare may not include a free checked bag</strong>');
+  items.forEach(function(line){var i=document.createElement('div');i.className='summary-item';i.innerHTML=line;card.appendChild(i);});
+  el.appendChild(card);rh();
+}
+async function persistLuggageEntries(next){
+  try{var d=await invoke('/luggage/entries','POST',{tripId:tripId,entries:next});luggageEntries=d.entries||[];renderLuggageEntries();}catch(_e){}
+}
+function addLuggageEntry(name,airline,iata){persistLuggageEntries(luggageEntries.concat([{name:name,airline:airline,iata:iata||''}]));}
+function removeLuggageEntry(idx){persistLuggageEntries(luggageEntries.filter(function(_,i){return i!==idx;}));}
+document.getElementById('lg-add-btn').addEventListener('click',function(){
+  var name=document.getElementById('lg-name').value.trim();
+  var airline=getSelectedAirline();
+  if(!name){document.getElementById('lg-name').focus();return;}
+  if(!airline){document.getElementById('lg-airline-search').focus();return;}
+  document.getElementById('lg-name').value='';
+  document.getElementById('lg-airline-search').value='';
+  document.getElementById('lg-airline-value').value='';
+  selectedAirlineName='';selectedAirlineIata='';
+  addLuggageEntry(name,airline,selectedAirlineIata);
+});
+document.getElementById('lg-name').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('lg-add-btn').click();});
+
+// ══ EMERGENCY ══
+function renderEmergency(){
+  var el=document.getElementById('emergency-grid');el.innerHTML='';
+  var countries=detectedCountries.length?detectedCountries.map(function(c){return c.countryCode;}):[];
+  if(!countries.length){el.innerHTML='<div class="status-text">No trip countries detected yet.</div>';rh();return;}
+  countries.forEach(function(cc){
+    var info=EMERGENCY[cc];
+    if(!info)return;
+    var card=document.createElement('div');card.className='emergency-card';
+    var title=document.createElement('div');title.className='emergency-card-title';title.innerHTML='🚨 '+info.name;card.appendChild(title);
+    var numbers=document.createElement('div');numbers.className='emergency-numbers';
+    [['Police',info.police,'police'],['Fire',info.fire,'fire'],['Ambulance',info.ambulance,'ambulance']].forEach(function(row){
+      var r=document.createElement('div');r.className='e-row';
+      var l=document.createElement('div');l.className='e-lbl';l.textContent=row[0];
+      var n=document.createElement('div');n.className='e-num '+row[2];n.textContent=row[1];
+      r.appendChild(l);r.appendChild(n);numbers.appendChild(r);
+    });
+    card.appendChild(numbers);
+    if(info.embassy_hint){var hint=document.createElement('div');hint.className='embassy-note';hint.textContent=info.embassy_hint;card.appendChild(hint);}
+    el.appendChild(card);
+  });
+  if(!el.children.length)el.innerHTML='<div class="status-text">No emergency data for detected countries.</div>';
+  rh();
+}
+
+// ══ Context ══
+async function onContext(ctx){
+  if(!ctx.tripId)return;
+  tripId=ctx.tripId;
+
+  // ── 1. Trip context (dates + countries) ───────────────────────────────────
+  try{
+    var d=await invoke('/trip-context?tripId='+tripId,'GET');
+    tripStart=d.startDate||null;tripEnd=d.endDate||null;
+    if(tripStart){document.getElementById('hol-start').value=tripStart;document.getElementById('wx-start').value=tripStart;}
+    if(tripEnd){document.getElementById('hol-end').value=tripEnd;document.getElementById('wx-end').value=tripEnd;}
+    if(d.detectedCountries&&d.detectedCountries.length){
+      detectedCountries=d.detectedCountries;
+      var first=detectedCountries[0];
+      setDD('dest',first.countryCode);setDD('hol',first.countryCode);setDD('wx',first.countryCode);
+      if(first.name)document.getElementById('wx-city').value=first.name;
+      setDD('ai-country',first.countryCode);
+      currentBriefingCountry=first.countryCode;
+      currentBriefingName=COUNTRIES[first.countryCode]||first.countryCode;
+      document.getElementById('val-ai-country-name').value=currentBriefingName;
+    }
+  }catch(_e){}
+
+  // ── 2. Airlines ────────────────────────────────────────────────────────────
+  try{
+    var ad=await invoke('/luggage/auto-airlines?tripId='+tripId,'GET');
+    if(ad.airlines&&ad.airlines.length){
+      detectedAirlines=ad.airlines.map(function(a){return a.canonical||a.raw||a;});
+      detectedAirlineRaw=ad.airlines;
+    }
+  }catch(_e){}
+
+  // ── 3. Hero ────────────────────────────────────────────────────────────────
+  try{
+    var trip=await invoke('/trip-info?tripId='+tripId,'GET');
+    renderHero({title:trip.title,startDate:trip.startDate,endDate:trip.endDate});
+  }catch(_e){}
+
+  detectedAirlineSet=new Set(detectedAirlines);
+  initAirlineSearch();
+  renderEmergency();
+
+  // ── 5. Duty-free + luggage ─────────────────────────────────────────────────
+  try{
+    var dd=await invoke('/duty-free/countries?tripId='+tripId,'GET');
+    dutyCountries=dd.countries||[];
+    if(!dutyCountries.length&&detectedCountries.length){
+      dutyCountries=detectedCountries.map(function(c){return c.countryCode;}).filter(function(cc){return DUTY_FREE[cc];});
+      if(dutyCountries.length)await invoke('/duty-free/countries','POST',{tripId:tripId,countries:dutyCountries});
+    }
+    renderDutyChips();
+  }catch(_e){}
+  try{
+    var ld=await invoke('/luggage/entries?tripId='+tripId,'GET');
+    luggageEntries=ld.entries||[];renderLuggageEntries();
+  }catch(_e){}
+  rh();
+}
+// trek:ready and resize are handled automatically by the <!-- trek:ui --> bootstrap
+</script>
+</body>
+</html>
