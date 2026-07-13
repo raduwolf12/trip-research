@@ -65,6 +65,7 @@ entry when auto-detection has nothing to go on.
 | `http:outbound:nominatim.openstreetmap.org` | Geocodes city names to coordinates for weather, and reverse-geocodes coordinates to countries for destination detection. |
 | `http:outbound:www.gdacs.org` | Live current natural-hazard alerts (GDACS) shown on the Safety tab. |
 | `http:outbound:en.wikivoyage.org` | Live etiquette/tipping text (Wikivoyage "Respect" section) shown on the Culture tab. |
+| `rates:read` | Reads TREK currency rates when normalizing and displaying money values in the trip currency. |
 
 ## Setup
 
