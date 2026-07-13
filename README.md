@@ -15,15 +15,15 @@ twelve sub-tabs:
 - **🌐 Overview / 💉 Health / 📶 Connectivity** — a curated reference briefing
   per destination (vaccines, tap water, eSIM info, transport, food). This is
   **static hand-curated data bundled with the plugin**, not an AI or live API
-  call — see `data/destinations.js` for the current country list and
+  call — see `server/destinations.js` for the current country list and
   sources. Connectivity's voltage/plug-type/frequency is overridden by
-  `data/electric-plugs.js` (manually populated from the IEC world-plugs data)
+  `server/electric-plugs.js` (manually populated from the IEC world-plugs data)
   when a country has an entry there.
 - **🛡 Safety** — the curated advisory/crime-index summary, plus a **live
   natural-hazards panel** fetched from GDACS (Global Disaster Alert and
   Coordination System) showing current active events (earthquakes, floods,
   cyclones, wildfires) affecting the destination country.
-- **🎎 Culture** — useful phrases stay curated (`data/destinations.js`), but
+- **🎎 Culture** — useful phrases stay curated (`server/destinations.js`), but
   etiquette/respect notes and tipping norms are fetched **live from
   Wikivoyage** (the destination country's "Respect" and "Tipping" wiki
   sections, stripped of markup into plain prose/bullets server-side).

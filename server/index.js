@@ -446,7 +446,7 @@ async function getEtiquette(title) {
 }
 
 // ── Electricity/plug override (manual IEC data — see data/electric-plugs.js) ─
-const { ELECTRIC_PLUGS, PLUG_TYPE_LETTERS } = require('../data/electric-plugs.js')
+const { ELECTRIC_PLUGS, PLUG_TYPE_LETTERS } = require('./electric-plugs.js')
 
 function overridePower(countryCode, fallbackPower) {
   const iec = ELECTRIC_PLUGS[countryCode]
@@ -566,6 +566,7 @@ module.exports = definePlugin({
           const seen = new Set()
           const detectedCountries = []
 
+          // 3.3.0: getPlaces SQL bug fixed — use actual place coordinates first
           try {
             const raw = await ctx.trips.getPlaces(tripId)
             const arr = Array.isArray(raw) ? raw : (raw?.data || raw?.places || [])
@@ -967,7 +968,7 @@ module.exports = definePlugin({
         const section = (req.query.section || 'all')
         if (!countryCode) return safeJson(200, { error: 'country required' })
 
-        const { DESTINATION_DATA } = require('../data/destinations.js')
+        const { DESTINATION_DATA } = require('./destinations.js')
         const dest = DESTINATION_DATA[countryCode] || null
         const curatedAvailable = !!dest
 
