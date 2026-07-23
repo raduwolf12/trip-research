@@ -3002,9 +3002,14 @@ const PLUG_TYPE_LETTERS = {
   9: 'I', 10: 'J', 11: 'K', 12: 'L', 13: 'M', 14: 'N', 15: 'O',
 }
 
+
+const PLUG_TYPES_LETTERS_PICS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O']
+  .reduce((acc, id) => { acc[id] = { label: `Type ${id}` }; return acc }, {})
+
+
 const ELECTRIC_PLUGS = {}
 for (const entry of IEC_PLUGS_RAW) {
   if (entry && entry.id) ELECTRIC_PLUGS[entry.id.toUpperCase()] = entry
 }
 
-module.exports = { ELECTRIC_PLUGS, PLUG_TYPE_LETTERS, IEC_PLUGS_RAW }
+module.exports = { ELECTRIC_PLUGS, PLUG_TYPE_LETTERS, PLUG_TYPES_LETTERS_PICS, IEC_PLUGS_RAW }

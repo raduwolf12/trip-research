@@ -41,7 +41,11 @@ function cached(key, ttlMs, fn) {
 // and cross-origin iframe fetches from an opaque-origin sandbox.
 // Using the ilyankou/passport-index-dataset (MIT licensed, Jan 2025 data)
 // from raw.githubusercontent.com instead — no auth, no CORS issues.
-const PASSPORT_INDEX_URL = 'https://raw.githubusercontent.com/ilyankou/passport-index-dataset/master/passport-index-tidy-iso2.csv'
+//Visas up to 2025
+const PASSPORT_INDEX_URL_LEGACY = 'https://raw.githubusercontent.com/ilyankou/passport-index-dataset/master/passport-index-tidy-iso2.csv'
+//Visas from 2026 onwards
+const PASSPORT_INDEX_URL = 'https://raw.githubusercontent.com/imorte/passport-index-data/refs/heads/main/passport-index-tidy-iso2.csv'
+
 
 let passportDataCache = null
 let passportDataFetchedAt = 0
@@ -73,6 +77,47 @@ async function getPassportData() {
   return data
 }
 
+// ── Emergency telephone numbers — fills gaps in the client's curated list ──
+// Unauthenticated GitHub Gist raw file, no CORS/WAF issues.
+const EMERGENCY_NUMBERS_URL = 'https://gist.githubusercontent.com/immujahidkhan/58c2e7402ad1df43ac4e03d025d7fed5/raw/9cf238b0fd71e7184970678b0b82e0252336ddd0/List-Of-Emergency-Telephone-Numbers'
+
+let emergencyDataCache = null
+let emergencyDataFetchedAt = 0
+const EMERGENCY_CACHE_TTL = 24 * 60 * 60 * 1000
+
+function joinNumbers(all) {
+  if (!Array.isArray(all)) return null
+  const vals = all.filter(Boolean)
+  return vals.length ? vals.join(' / ') : null
+}
+
+async function getEmergencyData() {
+  if (emergencyDataCache && Date.now() - emergencyDataFetchedAt < EMERGENCY_CACHE_TTL) {
+    return emergencyDataCache
+  }
+  const res = await fetchWithTimeout(EMERGENCY_NUMBERS_URL, { headers: { Accept: 'application/json' } }, 20000)
+  if (!res.ok) throw new Error(`Emergency numbers gist returned ${res.status}`)
+  const list = await res.json()
+  const byCountry = {}
+  for (const entry of list) {
+    const code = entry?.Country?.ISOCode?.toUpperCase()
+    if (!code) continue
+    byCountry[code] = {
+      name: entry.Country.Name,
+      police: joinNumbers(entry.Police?.All),
+      fire: joinNumbers(entry.Fire?.All),
+      ambulance: joinNumbers(entry.Ambulance?.All),
+      dispatch: joinNumbers(entry.Dispatch?.All),
+      member112: !!entry.Member_112,
+      localOnly: !!entry.LocalOnly,
+      notes: entry.Notes || null,
+    }
+  }
+  emergencyDataCache = byCountry
+  emergencyDataFetchedAt = Date.now()
+  return byCountry
+}
+
 function interpretRequirement(req) {
   if (!req) return { category: 'Unknown', label: 'Unknown', days: null }
   const r = req.toLowerCase().trim()
@@ -85,6 +130,32 @@ function interpretRequirement(req) {
   const days = parseInt(r)
   if (!isNaN(days)) return { category: 'Visa Free', label: `Visa Free`, days }
   return { category: 'Other', label: req, days: null }
+}
+
+// ── Henley Passport Index — second opinion on visa requirements ─────────────
+// Unauthenticated, no CORS/WAF issues (unlike visalist.io). Keyed by the
+// traveller's passport (same convention as PASSPORT_INDEX_URL above), one
+// request per passport returns every destination bucketed by category.
+const HENLEY_CATEGORY_LABELS = {
+  visa_free_access: 'Visa Free',
+  visa_online: 'E-Visa',
+  visa_on_arrival: 'Visa on Arrival',
+  visa_required: 'Visa Required',
+  electronic_travel_authorisation: 'Electronic Travel Authorisation (ETA)',
+}
+
+async function getHenleyVisaData(passport) {
+  const url = `https://api.henleypassportindex.com/api/v3/visa-single/${passport}`
+  const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } }, 15000)
+  if (!res.ok) throw new Error(`Henley Passport Index returned ${res.status}`)
+  const json = await res.json()
+  const byDest = {}
+  for (const [key, label] of Object.entries(HENLEY_CATEGORY_LABELS)) {
+    for (const entry of (json[key] || [])) {
+      if (entry && entry.code) byDest[entry.code.toUpperCase()] = { category: label, name: entry.name }
+    }
+  }
+  return { country: json.country || null, byDest }
 }
 
 // Map from country alpha2Code to Nager.Date country code (they mostly match,
@@ -427,6 +498,29 @@ function wikitextToProse(wikitext, opts) {
   return { paragraphs, bullets }
 }
 
+// "Get in" section wikitext includes its subsections (Transit without a visa,
+// Residence Card, Customs, etc) — cut at the first "===" subheading so we only
+// keep the visa-relevant intro prose.
+function cutBeforeSubsection(wikitext) {
+  const match = wikitext.match(/\n===/)
+  return match ? wikitext.slice(0, match.index) : wikitext
+}
+
+async function getVisaNotes(title) {
+  const indices = await findWikivoyageSections(title, ['Get in'])
+  if (!indices || indices['Get in'] == null) return { available: false }
+  const wikitext = await fetchWikivoyageSectionWikitext(title, indices['Get in'])
+  const intro = cutBeforeSubsection(wikitext)
+  const { paragraphs, bullets } = wikitextToProse(intro, { maxParagraphs: 3, maxBullets: 8 })
+  if (!paragraphs.length && !bullets.length) return { available: false }
+  return {
+    available: true,
+    paragraphs,
+    bullets,
+    sourceUrl: `https://en.wikivoyage.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}#Get_in`,
+  }
+}
+
 async function getEtiquette(title) {
   const indices = await findWikivoyageSections(title, ['Respect', 'Tipping'])
   if (!indices || !indices.Respect) return { available: false }
@@ -445,17 +539,138 @@ async function getEtiquette(title) {
   }
 }
 
+// ── traveldoc.aero InfoPages — health & customs advisories, per destination ─
+// Unauthenticated and CORS-friendly (unlike the checkpassenger endpoint the
+// same provider exposes for airline partners — that one 400s without a
+// partner API key/session, so we don't use it). Keyed by ICAO3/alpha-3, so
+// alpha-2 country codes are converted via iso3.js first.
+const { ISO2_TO_ISO3 } = require('./iso3.js')
+const TRAVELDOC_BASE = 'https://infopages.traveldoc.aero'
+
+async function fetchTraveldocSection(kind, iso3) {
+  const url = `${TRAVELDOC_BASE}/${kind}/${iso3}/Plain?language=en`
+  const res = await fetchWithTimeout(url, { headers: { Accept: 'text/html' } }, 15000)
+  if (!res.ok) throw new Error(`traveldoc.aero returned ${res.status}`)
+  const html = await res.text()
+  // Unknown country codes render an "An unexpected error occurred." shell
+  // page instead of a 404. Some valid pages (e.g. Spain's Customs page) skip
+  // the <h1> title entirely, so that can't be used as the validity signal.
+  if (/An unexpected error occurred/i.test(html)) return null
+  return html
+}
+
+// Headings/list items carry the structure here (Required Vaccinations,
+// Prohibited, etc), so keep line breaks instead of collapsing to prose.
+function traveldocHtmlToLines(html) {
+  let text = html
+  text = text.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '')
+  text = text.replace(/<li[^>]*>/gi, '\n* ')
+  text = text.replace(/<h([1-4])[^>]*>/gi, '\n\n## ')
+  text = text.replace(/<\/(h1|h2|h3|h4|p|div|ul|ol)>/gi, '\n')
+  text = text.replace(/<br\s*\/?>/gi, '\n')
+  text = text.replace(/<a[^>]*>([\s\S]*?)<\/a>/gi, '$1')
+  text = text.replace(/<[^>]+>/g, '')
+  text = text.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+    .replace(/&#39;/g, '\'').replace(/&mdash;/g, '—').replace(/&ndash;/g, '–')
+  return text.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean)
+}
+
+function stripHtmlToText(html) {
+  return html.replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+    .replace(/&#39;/g, '\'').replace(/&mdash;/g, '—').replace(/&ndash;/g, '–')
+    .replace(/\s+/g, ' ').trim()
+}
+
+function parseHeadingCategories(sectionHtml, headingTag) {
+  const categories = []
+  const re = new RegExp(`<${headingTag}[^>]*>([\\s\\S]*?)</${headingTag}>([\\s\\S]*?)(?=<${headingTag}[^>]*>|$)`, 'gi')
+  let m
+  while ((m = re.exec(sectionHtml))) {
+    const label = stripHtmlToText(m[1])
+    if (!label) continue
+    const body = m[2]
+    const items = []
+    const liRe = /<li[^>]*>([\s\S]*?)<\/li>/gi
+    let lm
+    while ((lm = liRe.exec(body))) { const t = stripHtmlToText(lm[1]); if (t) items.push(t) }
+    if (!items.length) {
+      const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi
+      let pm
+      while ((pm = pRe.exec(body))) { const t = stripHtmlToText(pm[1]); if (t) items.push(t) }
+    }
+    categories.push({ label, items })
+  }
+  return categories
+}
+
+// The Customs page always has a "Free to Import" h3 section right before
+// "Prohibited" — this is the duty-free allowance data, just not in the
+// curated DUTY_FREE table the client keeps for a handful of countries.
+// Most countries list categories (Tobacco, Alcohol, Currency, ...) directly
+// as h4 subheadings. EU countries add an extra layer of h4 context headers
+// ("When travelling within EU" / "When travelling from outside the EU"),
+// each with its own h5 category subheadings underneath.
+function extractFreeToImportSection(html) {
+  const start = html.match(/<h3[^>]*>\s*Free to Import\s*<\/h3>/i)
+  if (!start) return null
+  const rest = html.slice(start.index + start[0].length)
+  const end = rest.match(/<h3[^>]*>/i)
+  const sectionHtml = end ? rest.slice(0, end.index) : rest
+
+  if (/<h5[^>]*>/i.test(sectionHtml)) {
+    const groups = []
+    const h4Re = /<h4[^>]*>([\s\S]*?)<\/h4>([\s\S]*?)(?=<h4[^>]*>|$)/gi
+    let m
+    while ((m = h4Re.exec(sectionHtml))) {
+      const context = stripHtmlToText(m[1])
+      const categories = parseHeadingCategories(m[2], 'h5')
+      if (context && categories.length) groups.push({ context, categories })
+    }
+    return groups.length ? { groups } : null
+  }
+
+  const categories = parseHeadingCategories(sectionHtml, 'h4')
+  return categories.length ? { groups: [{ context: null, categories }] } : null
+}
+
+async function getTraveldocAdvisory(kind, countryCode) {
+  const iso3 = ISO2_TO_ISO3[countryCode]
+  if (!iso3) return { available: false, message: `No ISO3 mapping for "${countryCode}"` }
+  const html = await fetchTraveldocSection(kind, iso3)
+  if (!html) return { available: false, message: `No ${kind.toLowerCase()} advisory found for "${countryCode}"` }
+  const result = {
+    available: true,
+    lines: traveldocHtmlToLines(html),
+    sourceUrl: `${TRAVELDOC_BASE}/${kind}/${iso3}?language=en`,
+  }
+  if (kind === 'Customs') {
+    const freeToImport = extractFreeToImportSection(html)
+    if (freeToImport) result.freeToImport = freeToImport
+  }
+  return result
+}
+
 // ── Electricity/plug override (manual IEC data — see data/electric-plugs.js) ─
-const { ELECTRIC_PLUGS, PLUG_TYPE_LETTERS } = require('./electric-plugs.js')
+const { ELECTRIC_PLUGS, PLUG_TYPE_LETTERS, PLUG_TYPES_LETTERS_PICS } = require('./electric-plugs.js')
 
 function overridePower(countryCode, fallbackPower) {
   const iec = ELECTRIC_PLUGS[countryCode]
   if (!iec) return fallbackPower
-  const plugType = (iec.plugs || []).map((p) => PLUG_TYPE_LETTERS[p]).filter(Boolean).join(' / ')
+  const plugTypeCodes = (iec.plugs || []).filter((p) => PLUG_TYPE_LETTERS[p])
+  const plugTypes = plugTypeCodes.map((p) => PLUG_TYPE_LETTERS[p])
+  const plugTypePictures = plugTypes.map((letter) => {
+    const pic = PLUG_TYPES_LETTERS_PICS[letter]
+    return { letter, label: (pic && pic.label) || `Type ${letter}` }
+  })
+  const plugType = plugTypes.join(' / ')
   return {
     voltage: (iec.voltages || []).join('/') + 'V',
     frequency: (iec.frequencies || []).join('/') + ' Hz',
     plugType: plugType ? 'Type ' + plugType : (fallbackPower && fallbackPower.plugType) || '—',
+    plugTypeCodes,
+    plugTypes,
+    plugTypePictures,
     note: (fallbackPower && fallbackPower.note) || '',
   }
 }
@@ -646,15 +861,31 @@ module.exports = definePlugin({
       async handler(req, ctx) {
         const passport = (req.query.passport || '').trim().toUpperCase()
         const dest = (req.query.dest || '').trim().toUpperCase()
+        const title = (req.query.title || '').trim()
         if (!passport) return safeJson(200, { error: 'passport (ISO2 code) required' })
         const result = await tryAttempt(async () => {
           const data = await getPassportData()
           const requirements = data[passport]
           if (!requirements) return { error: `Passport code "${passport}" not found. Use ISO2 codes (e.g. DK, JP, US).` }
+
+          // Second opinion, same passport — Henley categorizes destinations
+          // slightly differently (e.g. it splits out ETA from e-visa) and is
+          // updated independently of the passport-index-dataset, so the two
+          // occasionally disagree on borderline cases.
+          let henleyData = null
+          try {
+            henleyData = await cached(`henley:${passport}`, 24 * 60 * 60 * 1000, () => getHenleyVisaData(passport))
+          } catch (_e) { /* best-effort — henley fields stay null below */ }
+
           if (dest) {
             const req = requirements[dest]
             if (!req) return { error: `No data for destination "${dest}"` }
-            return { passport, dest, ...interpretRequirement(req) }
+            let wikivoyage = null
+            if (title) {
+              wikivoyage = await cached(`visa-notes:${title}`, 24 * 60 * 60 * 1000, () => getVisaNotes(title))
+            }
+            const henley = henleyData ? (henleyData.byDest[dest] || { category: 'Unknown', name: null }) : null
+            return { passport, dest, ...interpretRequirement(req), wikivoyage, henley }
           }
           // Return all destinations
           return {
@@ -663,6 +894,7 @@ module.exports = definePlugin({
             visas: Object.entries(requirements).map(([d, r]) => ({
               dest: d,
               ...interpretRequirement(r),
+              henley: henleyData ? (henleyData.byDest[d] || { category: 'Unknown', name: null }) : null,
             })),
           }
         })
@@ -1030,6 +1262,54 @@ module.exports = definePlugin({
           const data = await cached(`etiquette:${title}`, 24 * 60 * 60 * 1000, () => getEtiquette(title))
           if (!data.available) return { available: false, title, message: `No Wikivoyage "Respect" section found for "${title}".` }
           return { available: true, title, ...data }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── health/customs: live traveldoc.aero advisories per destination ───────
+    {
+      method: 'GET',
+      path: '/travel-health',
+      auth: true,
+      async handler(req, ctx) {
+        const countryCode = (req.query.country || '').trim().toUpperCase()
+        if (!countryCode) return safeJson(200, { error: 'country (ISO2 code) required' })
+        const result = await tryAttempt(async () => {
+          const data = await cached(`travelhealth:${countryCode}`, 24 * 60 * 60 * 1000, () => getTraveldocAdvisory('Health', countryCode))
+          return { country: countryCode, ...data }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'GET',
+      path: '/travel-customs',
+      auth: true,
+      async handler(req, ctx) {
+        const countryCode = (req.query.country || '').trim().toUpperCase()
+        if (!countryCode) return safeJson(200, { error: 'country (ISO2 code) required' })
+        const result = await tryAttempt(async () => {
+          const data = await cached(`travelcustoms:${countryCode}`, 24 * 60 * 60 * 1000, () => getTraveldocAdvisory('Customs', countryCode))
+          return { country: countryCode, ...data }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── emergency numbers: fills gaps outside the client's curated list ──────
+    {
+      method: 'GET',
+      path: '/emergency-numbers',
+      auth: true,
+      async handler(req, ctx) {
+        const countryCode = (req.query.country || '').trim().toUpperCase()
+        if (!countryCode) return safeJson(200, { error: 'country (ISO2 code) required' })
+        const result = await tryAttempt(async () => {
+          const byCountry = await getEmergencyData()
+          const entry = byCountry[countryCode]
+          if (!entry) return { available: false, country: countryCode, message: `No emergency number data for "${countryCode}"` }
+          return { available: true, country: countryCode, ...entry, sourceUrl: EMERGENCY_NUMBERS_URL }
         })
         return safeJson(200, result)
       },

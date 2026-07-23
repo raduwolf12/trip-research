@@ -690,6 +690,8 @@ body.trek-ui {
     .visa-required{background:var(--danger-soft);color:var(--danger);}
     .visa-other{background:var(--bg-tertiary);color:var(--text-muted);}
     .visa-days{font-size:12px;color:var(--text-muted);}
+    .visa-second-opinion{font-size:10.5px;color:var(--text-faint);}
+    .visa-second-opinion.differs{color:var(--warning);font-weight:600;}
     .filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
     .filter-select{background:var(--bg-input);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text-primary);font-size:12px;outline:none;cursor:pointer;font-family:inherit;}
     .count-badge{font-size:12px;color:var(--text-faint);}
@@ -738,6 +740,10 @@ body.trek-ui {
     .a-lbl{font-size:11.5px;color:var(--text-muted);}
     .a-val{font-size:12px;font-weight:700;color:var(--text-primary);text-align:right;max-width:60%;}
     .a-note{font-size:11.5px;color:var(--warning);background:var(--warning-soft);padding:5px 8px;border-radius:6px;margin-top:5px;line-height:1.4;}
+    .a-live{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-secondary);}
+    .a-live-title{font-size:10.5px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+    .a-group-title{font-size:11px;font-weight:700;color:var(--text-secondary);margin-top:8px;}
+    .a-group-title:first-child{margin-top:0;}
 
     /* Luggage */
     .entry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:8px;}
@@ -818,6 +824,10 @@ body.trek-ui {
     .b-power-cell{background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:10px 12px;}
     .b-power-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:4px;}
     .b-power-value{font-size:15px;font-weight:800;color:var(--text-primary);}
+    .b-plug-icons{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+    .b-plug-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--bg-secondary);border:1px solid var(--border-primary);color:var(--text-secondary);font-size:12px;font-weight:600;}
+    .b-plug-image{width:20px;height:20px;object-fit:contain;display:block;}
+    .b-plug-image svg{width:100%;height:100%;display:block;}
     .b-skeleton{background:linear-gradient(90deg,var(--bg-tertiary) 0%,var(--bg-hover) 50%,var(--bg-tertiary) 100%);background-size:200% 100%;animation:trek-shimmer 1.6s linear infinite;border-radius:var(--radius-md);height:180px;margin-bottom:14px;}
     .b-gen-note{font-size:11.5px;color:var(--text-faint);margin-top:10px;font-style:italic;}
     .full-width{grid-column:1/-1;}
@@ -1044,12 +1054,11 @@ async function loadBriefings(cc,name){
         var note=document.createElement('div');note.className='b-gen-note';note.textContent='Curated reference data — always verify current conditions before travel.';ot.appendChild(note);
       } else ot.innerHTML=curatedMsg;
     }
-    var ht=getTarget('health');
-    if(ht){if(data.health){ht.innerHTML='';renderHealth(ht,data.health);}else ht.innerHTML=curatedMsg;}
-
-    // Safety, Culture, and Connectivity always render even with no curated
-    // destinations.js entry — they're backed (fully or partly) by live
-    // sources (GDACS, Wikivoyage, IEC plugs) that don't need curated data.
+    // Health, Safety, Culture, and Connectivity always render even with no
+    // curated destinations.js entry — they're backed (fully or partly) by
+    // live sources (traveldoc.aero, GDACS, Wikivoyage, IEC plugs) that don't
+    // need curated data.
+    var ht=getTarget('health');if(ht){ht.innerHTML='';renderHealth(ht,data.health||{},cc);}
     var stt=getTarget('safety');if(stt){stt.innerHTML='';renderSafety(stt,data.safety||{},cc);}
     var clt=getTarget('culture');if(clt){clt.innerHTML='';renderCulture(clt,data.culture||{},cc);}
     var cnt=getTarget('connectivity');if(cnt){cnt.innerHTML='';renderConnectivity(cnt,data.connectivity||{});}
@@ -1182,7 +1191,7 @@ function renderSafety(el,d,cc){
   el.appendChild(grid);
 }
 
-function renderHealth(el,d){
+function renderHealth(el,d,cc){
   var grid=document.createElement('div');grid.className='briefing-grid';
   if(d.vaccines){
     var c=bcard('Vaccinations & health','CDC / WHO GUIDANCE');
@@ -1196,7 +1205,49 @@ function renderHealth(el,d){
   }
   if(d.waterFood){var c=bcard('Water & food','SAFETY OF CONSUMPTION');c.appendChild(blist(d.waterFood));grid.appendChild(c);}
   if(d.healthcare){var c=bcard('Healthcare','IF SOMETHING HAPPENS');c.appendChild(blist(d.healthcare));grid.appendChild(c);}
+
+  var advisoryCard=bcard('Health advisory','LIVE — TRAVELDOC.AERO');advisoryCard.classList.add('full-width');
+  var advisoryBody=document.createElement('div');advisoryBody.className='b-card-body';advisoryBody.textContent='Loading current advisory…';
+  advisoryCard.appendChild(advisoryBody);grid.appendChild(advisoryCard);
+
+  var customsCard=bcard('Customs & import rules','LIVE — TRAVELDOC.AERO');customsCard.classList.add('full-width');
+  var customsBody=document.createElement('div');customsBody.className='b-card-body';customsBody.textContent='Loading current rules…';
+  customsCard.appendChild(customsBody);grid.appendChild(customsCard);
+
   el.appendChild(grid);
+
+  if(cc){
+    loadTraveldocAdvisory('travel-health',cc,advisoryBody);
+    loadTraveldocAdvisory('travel-customs',cc,customsBody);
+  }else{advisoryBody.textContent='No country selected.';customsBody.textContent='No country selected.';}
+}
+
+// Lines come pre-marked from the server: '## ' = heading, '* ' = bullet, else prose.
+function renderTraveldocLines(el,lines){
+  el.innerHTML='';
+  var list=null;
+  lines.forEach(function(line){
+    if(line.indexOf('## ')===0){
+      list=null;
+      var h=document.createElement('div');h.className='b-card-title';h.style.fontSize='13px';h.style.marginTop='10px';h.textContent=line.slice(3);el.appendChild(h);
+    }else if(line.indexOf('* ')===0){
+      if(!list){list=document.createElement('ul');list.className='b-list';el.appendChild(list);}
+      var li=document.createElement('li');li.textContent=line.slice(2);list.appendChild(li);
+    }else{
+      list=null;
+      var p=document.createElement('div');p.className='b-card-body';p.style.marginBottom='8px';p.textContent=line;el.appendChild(p);
+    }
+  });
+}
+async function loadTraveldocAdvisory(path,cc,targetEl){
+  try{
+    var data=await invoke('/'+path+'?country='+encodeURIComponent(cc),'GET');
+    if(data.error){targetEl.textContent='Could not load: '+data.error;rh();return;}
+    if(!data.available){targetEl.textContent=data.message||'No data available for this destination.';rh();return;}
+    renderTraveldocLines(targetEl,data.lines||[]);
+    var src=document.createElement('div');src.className='b-gen-note';src.textContent='Live from traveldoc.aero — always verify with official sources before travel.';targetEl.appendChild(src);
+  }catch(e){targetEl.textContent='Failed to load.';}
+  rh();
 }
 
 function renderProseBullets(container,data){
@@ -1246,6 +1297,35 @@ function renderCulture(el,d,cc){
   el.appendChild(grid);
 }
 
+// Schematic plug-face icons, drawn inline (no network fetch) since IEC's own
+// plug images sit behind an AWS WAF bot challenge that blocks even plain
+// <img> loads from inside TREK's sandboxed plugin iframe (opaque origin
+// breaks the WAF's browser-challenge cookie — same issue as visalist.io).
+// Not to scale/spec, just enough to tell pin shapes/arrangement apart.
+var PLUG_ICON_PINS={
+  A:'<rect x="13" y="12" width="4" height="14" rx="1"/><rect x="23" y="12" width="4" height="14" rx="1"/>',
+  B:'<rect x="13" y="10" width="4" height="13" rx="1"/><rect x="23" y="10" width="4" height="13" rx="1"/><circle cx="20" cy="29" r="3"/>',
+  C:'<circle cx="15" cy="20" r="3.5"/><circle cx="25" cy="20" r="3.5"/>',
+  D:'<circle cx="20" cy="12" r="4"/><circle cx="13" cy="27" r="4"/><circle cx="27" cy="27" r="4"/>',
+  E:'<circle cx="20" cy="13" r="3"/><circle cx="14" cy="26" r="3"/><circle cx="26" cy="26" r="3"/>',
+  F:'<circle cx="14" cy="20" r="3.5"/><circle cx="26" cy="20" r="3.5"/><rect x="6" y="17" width="3" height="6" rx="1"/><rect x="31" y="17" width="3" height="6" rx="1"/>',
+  G:'<rect x="18" y="9" width="4" height="10" rx="1"/><rect x="9" y="24" width="9" height="4" rx="1"/><rect x="22" y="24" width="9" height="4" rx="1"/>',
+  H:'<line x1="14" y1="13" x2="20" y2="25" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><line x1="26" y1="13" x2="20" y2="25" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="31" r="3"/>',
+  I:'<line x1="14" y1="13" x2="20" y2="22" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><line x1="26" y1="13" x2="20" y2="22" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><rect x="18" y="24" width="4" height="8" rx="1"/>',
+  J:'<circle cx="20" cy="12" r="3"/><circle cx="14" cy="27" r="3"/><circle cx="26" cy="27" r="3"/>',
+  K:'<circle cx="20" cy="12" r="3"/><circle cx="15" cy="25" r="3.5"/><circle cx="25" cy="25" r="3.5"/>',
+  L:'<circle cx="13" cy="20" r="3"/><circle cx="20" cy="20" r="3"/><circle cx="27" cy="20" r="3"/>',
+  M:'<circle cx="20" cy="11" r="5"/><circle cx="12" cy="28" r="5"/><circle cx="28" cy="28" r="5"/>',
+  N:'<circle cx="20" cy="12" r="3.5"/><circle cx="14" cy="27" r="3.5"/><circle cx="26" cy="27" r="3.5"/>',
+  O:'<circle cx="20" cy="12" r="3"/><circle cx="15" cy="24" r="3"/><circle cx="25" cy="24" r="3"/>',
+};
+function plugIconSvg(letter){
+  var pins=PLUG_ICON_PINS[letter];
+  if(!pins)return '';
+  return '<svg viewBox="0 0 40 40" width="28" height="28" fill="currentColor" aria-hidden="true">'+
+    '<circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>'+
+    pins+'</svg>';
+}
 function renderConnectivity(el,d){
   var grid=document.createElement('div');grid.className='briefing-grid';
   if(d.online){
@@ -1268,6 +1348,19 @@ function renderConnectivity(el,d){
       cell.appendChild(l);cell.appendChild(v);pg.appendChild(cell);
     });
     c.appendChild(pg);
+    if(d.power.plugTypePictures&&d.power.plugTypePictures.length){
+      var pics=document.createElement('div');pics.className='b-plug-icons';
+      d.power.plugTypePictures.forEach(function(p){
+        if(!p||!p.letter)return;
+        var svg=plugIconSvg(p.letter);
+        if(!svg)return;
+        var chip=document.createElement('div');chip.className='b-plug-chip';
+        var icon=document.createElement('span');icon.className='b-plug-image';icon.innerHTML=svg;
+        var txt=document.createElement('span');txt.textContent=p.label||('Type '+p.letter);
+        chip.appendChild(icon);chip.appendChild(txt);pics.appendChild(chip);
+      });
+      if(pics.children.length)c.appendChild(pics);
+    }
     if(d.power.note){var n=document.createElement('div');n.style.cssText='font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.5;';n.textContent=d.power.note;c.appendChild(n);}
     grid.appendChild(c);
   }
@@ -1361,6 +1454,18 @@ initDropdown('ai-country',function(code,name){
 
 // ══ VISA ══
 function visaBadgeClass(cat){if(!cat)return'visa-other';var c=cat.toLowerCase();if(c.includes('free'))return'visa-free';if(c.includes('arrival'))return'visa-arrival';if(c.includes('e-visa')||c.includes('eta'))return'visa-evisa';if(c.includes('required')||c.includes('admission'))return'visa-required';return'visa-other';}
+// Normalizes both sources' category strings (they don't use identical
+// wording — e.g. Henley says "Electronic Travel Authorisation (ETA)" where
+// passport-index says "ETA") so we can tell if the two sources actually agree.
+function normalizeVisaCat(cat){
+  if(!cat)return'';var c=cat.toLowerCase();
+  if(c.includes('free'))return'free';
+  if(c.includes('arrival'))return'arrival';
+  if(c.includes('eta')||c.includes('electronic travel'))return'eta';
+  if(c.includes('e-visa')||c.includes('online'))return'evisa';
+  if(c.includes('required')||c.includes('admission'))return'required';
+  return'other';
+}
 function renderVisas(visas){
   var el=document.getElementById('visa-results');el.innerHTML='';
   if(!visas.length){el.innerHTML='<div class="status-text">No results.</div>';rh();return;}
@@ -1374,6 +1479,12 @@ function renderVisas(visas){
     var badge=document.createElement('div');badge.className='visa-badge '+visaBadgeClass(v.category);badge.textContent=v.category||'Unknown';
     top.appendChild(nameWrap);top.appendChild(badge);card.appendChild(top);
     if(v.days){var d=document.createElement('div');d.className='visa-days';d.textContent='Stay up to '+v.days+' days';card.appendChild(d);}
+    if(v.henley&&v.henley.category&&v.henley.category!=='Unknown'){
+      var agree=normalizeVisaCat(v.category)===normalizeVisaCat(v.henley.category);
+      var ho=document.createElement('div');ho.className='visa-second-opinion'+(agree?'':' differs');
+      ho.textContent=(agree?'✓ ':'⚠ ')+'Henley Passport Index: '+v.henley.category;
+      card.appendChild(ho);
+    }
     el.appendChild(card);
   });rh();
 }
@@ -1493,22 +1604,55 @@ function renderDutyAllowances(){
   if(!dutyCountries.length){rh();return;}
   dutyCountries.forEach(function(cc){
     var info=DUTY_FREE[cc];
-    if(!info){var na=document.createElement('div');na.className='allowance-card';na.innerHTML='<div class="allowance-title">'+(COUNTRIES[cc]||cc)+'</div><div class="status-text">No data for this country yet.</div>';el.appendChild(na);return;}
     var card=document.createElement('div');card.className='allowance-card';
     var header=document.createElement('div');header.className='allowance-header';
-    var title=document.createElement('div');title.className='allowance-title';title.textContent=info.name;
+    var title=document.createElement('div');title.className='allowance-title';title.textContent=(info&&info.name)||COUNTRIES[cc]||cc;
     var rem=document.createElement('button');rem.className='allowance-remove';rem.textContent='Remove';rem.addEventListener('click',function(){removeDutyCountry(cc);});
     header.appendChild(title);header.appendChild(rem);card.appendChild(header);
-    var items=document.createElement('div');items.className='allowance-items';
-    [['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H7c-1.5 4-2 6-2 8a5 5 0 0 0 5 5z"/></svg> Alcohol',info.alcohol],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M18 12H2v4h16"/><path d="M22 12v4"/><path d="M7 12v4"/><path d="M18 8c0-2.5-2-2.5-2-5"/></svg> Tobacco',info.tobacco],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Goods value',info.goods],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Cash',info.cash]].forEach(function(pair){
-      var row=document.createElement('div');row.className='a-row';
-      var l=document.createElement('div');l.className='a-lbl';l.innerHTML=pair[0];
-      var v=document.createElement('div');v.className='a-val';v.textContent=pair[1];
-      row.appendChild(l);row.appendChild(v);items.appendChild(row);
-    });
-    if(info.note){var n=document.createElement('div');n.className='a-note';n.textContent=info.note;items.appendChild(n);}
-    card.appendChild(items);el.appendChild(card);
+
+    if(info){
+      var items=document.createElement('div');items.className='allowance-items';
+      [['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H7c-1.5 4-2 6-2 8a5 5 0 0 0 5 5z"/></svg> Alcohol',info.alcohol],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M18 12H2v4h16"/><path d="M22 12v4"/><path d="M7 12v4"/><path d="M18 8c0-2.5-2-2.5-2-5"/></svg> Tobacco',info.tobacco],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Goods value',info.goods],['<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> Cash',info.cash]].forEach(function(pair){
+        var row=document.createElement('div');row.className='a-row';
+        var l=document.createElement('div');l.className='a-lbl';l.innerHTML=pair[0];
+        var v=document.createElement('div');v.className='a-val';v.textContent=pair[1];
+        row.appendChild(l);row.appendChild(v);items.appendChild(row);
+      });
+      if(info.note){var n=document.createElement('div');n.className='a-note';n.textContent=info.note;items.appendChild(n);}
+      card.appendChild(items);
+    }else{
+      var na=document.createElement('div');na.className='status-text';na.textContent='No curated allowance data yet — showing live customs data below.';card.appendChild(na);
+    }
+
+    var liveWrap=document.createElement('div');liveWrap.className='a-live';
+    var liveTitle=document.createElement('div');liveTitle.className='a-live-title';liveTitle.textContent='Free to import — live';
+    var liveBody=document.createElement('div');liveBody.className='allowance-items';liveBody.textContent='Loading…';
+    liveWrap.appendChild(liveTitle);liveWrap.appendChild(liveBody);card.appendChild(liveWrap);
+
+    el.appendChild(card);
+    loadDutyFreeToImport(cc,liveBody);
   });rh();
+}
+async function loadDutyFreeToImport(cc,targetEl){
+  try{
+    var data=await invoke('/travel-customs?country='+encodeURIComponent(cc),'GET');
+    var groups=data&&data.freeToImport&&data.freeToImport.groups;
+    if(data.error||!data.available||!groups||!groups.length){
+      targetEl.textContent=(data&&data.message)||'No live free-to-import data available.';rh();return;
+    }
+    targetEl.innerHTML='';
+    groups.forEach(function(g){
+      if(g.context){var gt=document.createElement('div');gt.className='a-group-title';gt.textContent=g.context;targetEl.appendChild(gt);}
+      (g.categories||[]).forEach(function(cat){
+        var row=document.createElement('div');row.className='a-row';
+        var l=document.createElement('div');l.className='a-lbl';l.textContent=cat.label;
+        var v=document.createElement('div');v.className='a-val';v.textContent=(cat.items||[]).join(' ')||'—';
+        row.appendChild(l);row.appendChild(v);targetEl.appendChild(row);
+      });
+    });
+    var src=document.createElement('div');src.className='a-note';src.textContent='Live from traveldoc.aero — always verify against official customs guidance.';targetEl.appendChild(src);
+  }catch(e){targetEl.textContent='Failed to load live customs data.';}
+  rh();
 }
 async function persistDutyCountries(next){
   try{var d=await invoke('/duty-free/countries','POST',{tripId:tripId,countries:next});dutyCountries=d.countries||[];renderDutyChips();}catch(_e){}
@@ -1712,21 +1856,45 @@ function renderEmergency(){
   if(!countries.length){el.innerHTML='<div class="status-text">No trip countries detected yet.</div>';rh();return;}
   countries.forEach(function(cc){
     var info=EMERGENCY[cc];
-    if(!info)return;
     var card=document.createElement('div');card.className='emergency-card';
-    var title=document.createElement('div');title.className='emergency-card-title';title.innerHTML=info.name;card.appendChild(title);
+    var title=document.createElement('div');title.className='emergency-card-title';title.textContent=(info&&info.name)||COUNTRIES[cc]||cc;card.appendChild(title);
     var numbers=document.createElement('div');numbers.className='emergency-numbers';
-    [['Police',info.police,'police'],['Fire',info.fire,'fire'],['Ambulance',info.ambulance,'ambulance']].forEach(function(row){
+    card.appendChild(numbers);
+    if(info){
+      [['Police',info.police,'police'],['Fire',info.fire,'fire'],['Ambulance',info.ambulance,'ambulance']].forEach(function(row){
+        var r=document.createElement('div');r.className='e-row';
+        var l=document.createElement('div');l.className='e-lbl';l.textContent=row[0];
+        var n=document.createElement('div');n.className='e-num '+row[2];n.textContent=row[1];
+        r.appendChild(l);r.appendChild(n);numbers.appendChild(r);
+      });
+      if(info.embassy_hint){var hint=document.createElement('div');hint.className='embassy-note';hint.textContent=info.embassy_hint;card.appendChild(hint);}
+    }else{
+      numbers.textContent='Loading live emergency numbers…';
+      loadLiveEmergency(cc,card,numbers);
+    }
+    el.appendChild(card);
+  });
+  rh();
+}
+async function loadLiveEmergency(cc,card,numbersEl){
+  try{
+    var data=await invoke('/emergency-numbers?country='+encodeURIComponent(cc),'GET');
+    if(data.error||!data.available){numbersEl.innerHTML='<div class="status-text">No emergency data available.</div>';rh();return;}
+    numbersEl.innerHTML='';
+    [['Police',data.police,'police'],['Fire',data.fire,'fire'],['Ambulance',data.ambulance,'ambulance'],['Dispatch',data.dispatch,'']].forEach(function(row){
+      if(!row[1])return;
       var r=document.createElement('div');r.className='e-row';
       var l=document.createElement('div');l.className='e-lbl';l.textContent=row[0];
       var n=document.createElement('div');n.className='e-num '+row[2];n.textContent=row[1];
-      r.appendChild(l);r.appendChild(n);numbers.appendChild(r);
+      r.appendChild(l);r.appendChild(n);numbersEl.appendChild(r);
     });
-    card.appendChild(numbers);
-    if(info.embassy_hint){var hint=document.createElement('div');hint.className='embassy-note';hint.textContent=info.embassy_hint;card.appendChild(hint);}
-    el.appendChild(card);
-  });
-  if(!el.children.length)el.innerHTML='<div class="status-text">No emergency data for detected countries.</div>';
+    if(!numbersEl.children.length){numbersEl.innerHTML='<div class="status-text">No emergency data available.</div>';rh();return;}
+    var notes=[];
+    if(data.member112)notes.push('112 also works here (EU-wide emergency number).');
+    if(data.notes)notes.push(data.notes);
+    notes.push('Live data from an open dataset — verify locally.');
+    var hint=document.createElement('div');hint.className='embassy-note';hint.textContent=notes.join(' ');card.appendChild(hint);
+  }catch(e){numbersEl.innerHTML='<div class="status-text">Failed to load.</div>';}
   rh();
 }
 
