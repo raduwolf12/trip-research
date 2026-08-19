@@ -1159,6 +1159,118 @@ module.exports = definePlugin({
       },
     },
 
+    // ── briefing: per-trip country list stored in meta ───────────────────────
+    // Drives Overview/Safety/Health/Culture/Connectivity — same shape as
+    // duty-free/countries above so a multi-country trip only has to add each
+    // country once instead of re-selecting it per tab.
+    {
+      method: 'GET',
+      path: '/briefing/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'briefing_countries')
+          const countries = row ? JSON.parse(typeof row === 'string' ? row : row.value) : []
+          return { countries: Array.isArray(countries) ? countries : [] }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/briefing/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        const countries = Array.isArray(req.body?.countries) ? req.body.countries : []
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const clean = [...new Set(countries.map((c) => String(c).toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))]
+          await ctx.meta.set('trip', tripId, 'briefing_countries', JSON.stringify(clean))
+          return { countries: clean }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── settings: manual override for auto-detected trip dates ───────────────
+    // Auto-detection (see /trip-context) only looks at reservation metadata,
+    // which misses trips whose true start/end isn't reflected in any single
+    // reservation (e.g. a hotel-only leg). This lets the client's config
+    // panel pin exact dates instead. Empty/absent override falls back to
+    // whatever the client passes as the auto-detected value.
+    {
+      method: 'GET',
+      path: '/settings/trip-dates',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'trip_dates_override')
+          const val = row ? JSON.parse(typeof row === 'string' ? row : row.value) : null
+          return { startDate: val?.startDate || null, endDate: val?.endDate || null }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/settings/trip-dates',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
+        const startDate = isDate(req.body?.startDate) ? req.body.startDate : null
+        const endDate = isDate(req.body?.endDate) ? req.body.endDate : null
+        const result = await tryAttempt(async () => {
+          await ctx.meta.set('trip', tripId, 'trip_dates_override', JSON.stringify({ startDate, endDate }))
+          return { startDate, endDate }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── settings: manual override for auto-detected airlines ─────────────────
+    // /luggage/auto-airlines parses free-text reservation metadata and can
+    // mis-parse or miss an airline; this lets the config panel correct it.
+    // An empty override list is indistinguishable from "no override" (both
+    // fall back to auto-detected) — documented client-side.
+    {
+      method: 'GET',
+      path: '/settings/airlines',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'airlines_override')
+          const airlines = row ? JSON.parse(typeof row === 'string' ? row : row.value) : []
+          return { airlines: Array.isArray(airlines) ? airlines : [] }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/settings/airlines',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        const airlines = Array.isArray(req.body?.airlines) ? req.body.airlines : []
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const clean = [...new Set(airlines.map((a) => String(a).slice(0, 80).trim()).filter(Boolean))].slice(0, 30)
+          await ctx.meta.set('trip', tripId, 'airlines_override', JSON.stringify(clean))
+          return { airlines: clean }
+        })
+        return safeJson(200, result)
+      },
+    },
+
     // ── luggage: per-trip traveler entries stored in meta ────────────────────
     {
       method: 'GET',
