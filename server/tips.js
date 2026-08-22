@@ -10,6 +10,7 @@ const TOOL_CATEGORIES = [
     tools: [
       { name: 'trip.com', description: 'General travel platform', url: 'https://trip.com/' },
       { name: 'traveling.com', description: 'General travel platform', url: 'https://traveling.com' },
+      { name: 'PackPoint', description: 'Weather-aware packing list generator based on your destination and trip length', url: 'https://packpnt.com/' },
     ],
   },
   {
@@ -25,8 +26,9 @@ const TOOL_CATEGORIES = [
       { name: 'Secret Flying', description: 'Mistake fares and cheap flight deals', url: 'https://www.secretflying.com/' },
       { name: 'Going', description: 'Airfare deal alerts', url: 'https://www.going.com/' },
       { name: 'FlightStats', description: 'Flight status, schedules, and airport information', url: 'https://www.flightstats.com/' },
-      { name: 'Kayak', description: 'Flight, hotel, and car search with flexible date/price trend tools', url: 'https://www.kayak.com' },
+      { name: 'Kayak', description: 'Flights, stays, car rentals, and package holidays, with flexible date/price trend tools', url: 'https://www.kayak.com' },
       { name: 'Opodo', description: 'OTA for flights and package bookings', url: 'https://www.opodo.com/' },
+      { name: 'Hopper', description: 'Tracks flight prices with a color-coded calendar to suggest the best dates to book', url: 'https://www.hopper.com/' },
     ],
   },
   {
@@ -39,6 +41,23 @@ const TOOL_CATEGORIES = [
       { name: 'Bookaway', description: 'Buses, ferries, minibuses, and shuttles', url: 'https://www.bookaway.com/' },
       { name: 'Seat 61', description: 'Detailed global rail travel guidance', url: 'https://www.seat61.com/' },
       { name: 'BlaBlaCar', description: 'Long-distance ridesharing', url: 'https://www.blablacar.com/' },
+      { name: 'Omio', description: 'Books trains, buses, and flights across Europe with mobile boarding passes', url: 'https://www.omio.com/' },
+      { name: 'Flixbus', description: 'Budget long-distance bus network across Europe and beyond', url: 'https://www.flixbus.com/' },
+      { name: 'Trainline', description: 'Searches and books train and bus tickets across Europe from one app instead of each rail operator\'s own site', url: 'https://www.thetrainline.com/' },
+      { name: 'Turo', description: 'Peer-to-peer car rental — often cheaper than a rental counter and lets you skip the airport line', url: 'https://turo.com/' },
+    ],
+  },
+  {
+    key: 'rideshare',
+    label: 'Ride-hailing',
+    tools: [
+      { name: 'Uber', description: 'Ride-hailing available in many major cities worldwide', url: 'https://www.uber.com/' },
+      { name: 'Lyft', description: 'Ride-hailing alternative to Uber, mainly in the US and Canada', url: 'https://www.lyft.com/' },
+      { name: 'Bolt', description: 'Ride-hailing common across Europe and Africa, often cheaper than Uber', url: 'https://bolt.eu/' },
+      { name: 'inDriver', description: 'Ride-hailing where you and the driver negotiate the fare — popular in Latin America and Central Asia', url: 'https://indrive.com/' },
+      { name: 'FreeNow', description: 'Bundles taxis, ride-hailing, car rental, and e-scooters into one app across many European cities', url: 'https://www.free-now.com/' },
+      { name: 'Cabify', description: 'Ride-hailing with a strong foothold in Latin America and Spain', url: 'https://cabify.com/' },
+      { name: 'Careem', description: 'Ride-hailing "super app" (rides, food, payments) across the Middle East, North Africa, and Pakistan', url: 'https://www.careem.com/' },
     ],
   },
   {
@@ -57,6 +76,10 @@ const TOOL_CATEGORIES = [
       { name: 'Revolut', description: 'Travel-friendly card and spending app', url: 'https://www.revolut.com/' },
       { name: 'Wise', description: 'International transfers and low-fee currency conversion', url: 'https://wise.com/' },
       { name: 'Splitwise', description: 'Shared trip expense tracking', url: 'https://www.splitwise.com/' },
+      { name: 'Tricount', description: 'Free group expense splitter with a built-in currency converter', url: 'https://www.tricount.com/' },
+      { name: 'XE Currency Converter', description: 'Currency conversion that keeps working offline using the last-fetched rates', url: 'https://www.xe.com/currencyconverter/' },
+      { name: 'Venmo', description: 'Peer-to-peer payments and expense splitting, mainly for US-based travelers', url: 'https://venmo.com/' },
+      { name: 'Genius Scan', description: 'Scans receipts and documents to a PDF for expense tracking and record-keeping', url: 'https://www.thegrizzlylabs.com/genius-scan' },
     ],
   },
   {
@@ -76,6 +99,8 @@ const TOOL_CATEGORIES = [
     tools: [
       { name: 'Google Maps', description: 'Maps, directions, reviews, and saved places', url: 'https://www.google.com/maps' },
       { name: 'Organic Maps', description: 'Offline maps based on OpenStreetMap', url: 'https://organicmaps.app/' },
+      { name: 'Maps.me', description: 'Offline GPS navigation, popular for hiking and areas with poor signal', url: 'https://maps.me/' },
+      { name: 'Waze', description: 'Driving navigation with live, community-reported traffic, speed cameras, and rerouting', url: 'https://www.waze.com/' },
       { name: 'AllTrails', description: 'Hiking routes and trail info', url: 'https://www.alltrails.com/' },
       { name: 'Sygic Travel', description: 'Trip planning map for attractions and itineraries', url: 'https://travel.sygic.com/' },
     ],
@@ -88,6 +113,9 @@ const TOOL_CATEGORIES = [
       { name: 'Lonely Planet', description: 'Classic destination guides and travel inspiration', url: 'https://www.lonelyplanet.com/' },
       { name: 'Atlas Obscura', description: 'Unusual and quirky places', url: 'https://www.atlasobscura.com/' },
       { name: 'Reddit Travel', description: 'Community trip advice', url: 'https://www.reddit.com/r/travel/' },
+      { name: 'Rick Steves\' Europe App', description: 'Free audio walking tours and guides for major European destinations', url: 'https://www.ricksteves.com/travel-talks/audio-europe' },
+      { name: 'Happy Cow', description: 'Finds vegetarian and vegan-friendly restaurants and grocery stores nearby', url: 'https://www.happycow.net/' },
+      { name: 'Meetup', description: 'Local events and interest-based groups — a way to meet people and get local tips beyond the guidebook', url: 'https://www.meetup.com/' },
     ],
   },
   {
@@ -97,6 +125,9 @@ const TOOL_CATEGORIES = [
       { name: 'UK Foreign Travel Advice', description: 'Destination advisories and risk guidance', url: 'https://www.gov.uk/foreign-travel-advice' },
       { name: 'Numbeo Crime Index', description: 'Crowd-sourced safety and crime perception data', url: 'https://www.numbeo.com/crime/' },
       { name: 'Warnely', description: 'Travel safety scores and country risk overview', url: 'https://warnely.com/' },
+      { name: 'NordVPN', description: 'VPN for securing your connection on public/hotel Wi-Fi and bypassing local content blocks', url: 'https://nordvpn.com/' },
+      { name: 'AirVisual', description: 'Real-time air quality tracking — useful for destinations with heavy pollution or wildfire smoke', url: 'https://www.iqair.com/air-quality-monitors/airvisual' },
+      { name: '1Password', description: 'Password manager so losing a device abroad doesn\'t mean losing access to your accounts', url: 'https://1password.com/' },
     ],
   },
   {
@@ -116,7 +147,25 @@ const TOOL_CATEGORIES = [
     tools: [
       { name: 'TripIt', description: 'Organize bookings into a single itinerary', url: 'https://www.tripit.com/' },
       { name: 'Airalo', description: 'Travel eSIMs for mobile data abroad', url: 'https://www.airalo.com/' },
+      { name: 'Holafly', description: 'Unlimited-data travel eSIMs — an alternative to Airalo for longer stays', url: 'https://esim.holafly.com/' },
       { name: 'OpenWeather', description: 'Weather forecasts for trip planning', url: 'https://openweathermap.org/' },
+    ],
+  },
+  {
+    key: 'communication',
+    label: 'Communication and language',
+    tools: [
+      { name: 'WhatsApp', description: 'The default messaging and calling app in most of the world outside the US — expect to need it', url: 'https://www.whatsapp.com/' },
+      { name: 'Google Translate', description: 'Text, voice, and camera translation with offline language packs for when you have no signal', url: 'https://translate.google.com/' },
+      { name: 'Duolingo', description: 'Bite-sized lessons to pick up basic phrases before you go', url: 'https://www.duolingo.com/' },
+    ],
+  },
+  {
+    key: 'luggage-storage',
+    label: 'Luggage storage',
+    tools: [
+      { name: 'Bounce', description: 'Insured short-term luggage storage at local shops and hotels — handy between checkout and a flight', url: 'https://usebounce.com/' },
+      { name: 'Stasher', description: 'Insured luggage storage network, particularly strong around European train stations', url: 'https://stasher.com/' },
     ],
   },
 ]
@@ -160,6 +209,18 @@ const COUNTRY_APPS = {
   ID: [
     { name: 'Gojek', description: 'Ride-hailing, food delivery, and payments — Indonesia\'s equivalent to Grab, often cheaper locally', url: 'https://www.gojek.com/' },
     { name: 'Grab', description: 'Also widely available across Indonesia\'s major cities', url: 'https://www.grab.com/' },
+  ],
+  AE: [
+    { name: 'Careem', description: 'Regional "super app" for rides, food delivery, and payments — often more widely used than Uber locally', url: 'https://www.careem.com/' },
+  ],
+  SA: [
+    { name: 'Careem', description: 'Regional "super app" for rides, food delivery, and payments across Saudi cities', url: 'https://www.careem.com/' },
+  ],
+  DK: [
+    { name: 'Rejseplanen', description: 'Denmark\'s public transport planner — includes trains, buses, and metro', url: 'https://www.rejseplanen.dk/' },
+    { name: 'Rejsekort app', description: 'Denmark\'s public transport card app — used for buses, trains, and metro', url: 'https://dinoffentligetransport.dk/en/find-tickets/apps-for-your-journey', ios: 'https://apps.apple.com/dk/app/rejsekort/id6469603787?l=da', android: 'https://play.google.com/store/apps/details?id=dk.rejsekort.digitalrejsekort' },
+    { name: 'Rejsebillet app', description: 'Denmark\'s public transport ticket app — used for purchasing tickets for buses, trains, and metro', url: 'https://dinoffentligetransport.dk/en/find-tickets/apps-for-your-journey' },
+    { name: 'GoMore', description: 'Carpooling and car rental service — widely used in Denmark', url: 'https://gomore.dk/' },
   ],
 }
 

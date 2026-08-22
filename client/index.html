@@ -794,8 +794,10 @@ body.trek-ui {
     .briefing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;}
     @media(max-width:900px){.briefing-grid{grid-template-columns:repeat(2,1fr);}}
     @media(max-width:600px){.briefing-grid{grid-template-columns:1fr;}}
-    .briefing-country-head{font-size:14px;font-weight:800;color:var(--text-primary);margin:22px 0 10px;padding-top:16px;border-top:1px solid var(--border-primary);display:flex;align-items:center;gap:7px;}
-    .briefing-country-head:first-child{margin-top:0;padding-top:0;border-top:none;}
+    .briefing-country-card{border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:16px;background:var(--bg-card);box-shadow:var(--shadow-card);}
+    .briefing-country-card:last-child{margin-bottom:0;}
+    .briefing-country-cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .briefing-country-cardtitle{font-size:14px;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:7px;}
     .b-card{background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-card);}
     .b-card-title{font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:2px;}
     .b-card-subtitle{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin-bottom:12px;}
@@ -871,7 +873,8 @@ body.trek-ui {
     .apps-country-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
     .apps-country-flag{font-size:20px;line-height:1;}
     .apps-country-name{font-size:13.5px;font-weight:800;color:var(--text-primary);}
-    .apps-tool-pill--country:hover{background:color-mix(in oklch,var(--info) 16%,var(--bg-secondary));border-color:color-mix(in oklch,var(--info) 40%,var(--border-primary));}
+    .apps-tool-pill--country:hover{border-color:color-mix(in oklch,var(--info) 40%,var(--border-primary));}
+    .apps-tool-pill--country:hover .apps-tool-main{color:var(--text-primary);}
     .apps-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
     .apps-search{flex:1;min-width:160px;}
     .apps-catchips{display:flex;flex-wrap:wrap;gap:6px;}
@@ -887,9 +890,13 @@ body.trek-ui {
     .apps-cat-title{font-size:13.5px;font-weight:800;color:var(--text-primary);}
     .apps-cat-count{font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;}
     .apps-tool-wrap{display:flex;flex-wrap:wrap;gap:6px;}
-    .apps-tool-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--bg-secondary);border:1px solid var(--border-primary);color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:background .12s,border-color .12s,color .12s,transform .1s;}
-    .apps-tool-pill:hover{background:color-mix(in oklch,var(--cat-hue,var(--accent)) 16%,var(--bg-secondary));border-color:color-mix(in oklch,var(--cat-hue,var(--accent)) 40%,var(--border-primary));color:var(--text-primary);transform:translateY(-1px);}
-    .apps-tool-pill svg{flex-shrink:0;opacity:.55;}
+    .apps-tool-pill{display:inline-flex;align-items:stretch;border-radius:999px;background:var(--bg-secondary);border:1px solid var(--border-primary);overflow:hidden;transition:border-color .12s;}
+    .apps-tool-pill:hover{border-color:color-mix(in oklch,var(--cat-hue,var(--accent)) 40%,var(--border-primary));}
+    .apps-tool-main{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:6px 8px 6px 10px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:color .12s;}
+    .apps-tool-pill:hover .apps-tool-main{color:var(--text-primary);}
+    .apps-tool-main svg{flex-shrink:0;opacity:.55;}
+    .apps-store-link{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text-faint);padding:6px 8px;background:none;border:none;border-left:1px solid var(--border-primary);cursor:pointer;font-family:inherit;transition:color .12s,background .12s;}
+    .apps-store-link:hover{color:var(--text-primary);background:color-mix(in oklch,var(--cat-hue,var(--accent)) 14%,transparent);}
     .apps-empty{grid-column:1/-1;text-align:center;padding:24px 0;color:var(--text-faint);font-size:13px;}
     .empty-note{font-size:13px;color:var(--text-faint);font-style:italic;padding:8px 0;}
     .results-wrap{max-height:500px;overflow-y:auto;}
@@ -912,11 +919,21 @@ body.trek-ui {
   </div>
 </div>
 
-<!-- Trip settings: manual overrides for auto-detected dates & airlines -->
+<!-- Trip settings: manual overrides for auto-detected countries, dates & airlines -->
 <div class="config-panel" id="config-panel" style="display:none;">
   <div class="config-panel-inner">
     <div class="config-section">
-      <div class="section-label" style="margin-top:0;">Trip dates</div>
+      <div class="section-label" style="margin-top:0;">Trip countries</div>
+      <div class="config-note" id="config-countries-note"></div>
+      <div class="chip-wrap" id="config-country-chips"></div>
+      <div class="row">
+        <div class="country-wrap" id="wrap-config-country-add"><button type="button" class="country-display" id="btn-config-country-add"><span id="lbl-config-country-add">Add a country…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-config-country-add"><input class="country-search" id="search-config-country-add" placeholder="Search…"/><div class="country-list" id="list-config-country-add"></div></div><input type="hidden" id="val-config-country-add"/></div>
+        <button class="primary" id="config-country-add-btn">Add</button>
+        <button class="secondary" id="config-countries-reset">Reset to auto-detected</button>
+      </div>
+    </div>
+    <div class="config-section">
+      <div class="section-label">Trip dates</div>
       <div class="config-note" id="config-dates-note"></div>
       <div class="row">
         <input type="date" id="config-start" style="flex:1;"/>
@@ -931,7 +948,10 @@ body.trek-ui {
       <div class="config-note" id="config-airlines-note"></div>
       <div class="chip-wrap" id="config-airline-chips"></div>
       <div class="row">
-        <input type="text" id="config-airline-input" placeholder="Add an airline name…" style="flex:1;"/>
+        <div class="country-wrap" id="wrap-config-airline-add" style="flex:1;">
+          <input type="text" id="config-airline-input" placeholder="Add an airline name…" style="width:100%;"/>
+          <div class="country-dd" id="config-airline-dd"></div>
+        </div>
         <button class="primary" id="config-airline-add">Add</button>
         <button class="secondary" id="config-airlines-reset">Reset to auto-detected</button>
       </div>
@@ -994,6 +1014,7 @@ body.trek-ui {
       <div class="country-wrap" id="wrap-passport"><button type="button" class="country-display" id="btn-passport"><span id="lbl-passport">Your passport…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-passport"><input class="country-search" id="search-passport" placeholder="Search…"/><div class="country-list" id="list-passport"></div></div><input type="hidden" id="val-passport"/></div>
       <div class="country-wrap" id="wrap-dest"><button type="button" class="country-display" id="btn-dest"><span id="lbl-dest">Destination (optional)…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-dest"><input class="country-search" id="search-dest" placeholder="Search…"/><div class="country-list" id="list-dest"></div></div><input type="hidden" id="val-dest"/></div>
       <button class="primary" id="visa-btn">Look up</button>
+      <button class="secondary" id="visa-multi-btn" style="display:none;">Check all trip countries</button>
     </div>
     <div class="filter-row" id="visa-filter-row" style="display:none;">
       <select class="filter-select" id="visa-cat-filter"><option value="">All types</option><option value="Visa Free">Visa Free</option><option value="Visa on Arrival">Visa on Arrival</option><option value="E-Visa">E-Visa</option><option value="ETA">ETA</option><option value="Visa Required">Visa Required</option></select>
@@ -1125,7 +1146,7 @@ var pending={},reqCounter=0,tripId=null,tripStart=null,tripEnd=null;
 // (for "Reset to auto-detected") and whether an override is currently active.
 var autoTripStart=null,autoTripEnd=null,tripDatesOverride=null,tripTitle='Trip Research';
 var autoDetectedAirlines=[],airlinesOverride=[];
-var allVisas=[],detectedCountries=[],detectedAirlines=[],detectedAirlineRaw=[];
+var allVisas=[],detectedCountries=[],autoDetectedCountries=[],countriesOverride=[],detectedAirlines=[],detectedAirlineRaw=[];
 var dutyCountries=[],luggageEntries=[];
 
 function invoke(sub,method,body){
@@ -1180,6 +1201,9 @@ var APPS_CAT_META={
   safety:{icon:'🚨',hue:'#ef4444'},
   experiences:{icon:'🎟️',hue:'#ec4899'},
   connectivity:{icon:'📶',hue:'#06b6d4'},
+  rideshare:{icon:'🚕',hue:'#f59e0b'},
+  communication:{icon:'💬',hue:'#8b5cf6'},
+  'luggage-storage':{icon:'🧳',hue:'#64748b'},
 };
 var extLinkSvg='<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
 
@@ -1219,18 +1243,35 @@ function renderTripApps(el,data){
     head2.appendChild(flag);head2.appendChild(name);
     card.appendChild(head2);
     var wrap=document.createElement('div');wrap.className='apps-tool-wrap';
-    apps.forEach(function(app){
-      var pill=document.createElement('button');pill.type='button';pill.className='apps-tool-pill apps-tool-pill--country';pill.title=app.description+' — '+app.url;
-      pill.innerHTML=app.name+' '+extLinkSvg;
-      pill.addEventListener('click',function(){window.trek.openExternal(app.url);});
-      wrap.appendChild(pill);
-    });
+    apps.forEach(function(app){wrap.appendChild(mkToolPill(app,'apps-tool-pill--country'));});
     card.appendChild(wrap);
     grid.appendChild(card);
   });
   el.appendChild(grid);
 }
 
+// iOS/Android badges only render when a tool has an explicit ios/android
+// store URL in tips.js — most entries are curated without one, and a
+// hand-hidden store link is better than guessing a search URL that might
+// not point at the right app.
+function mkToolPill(tool,extraClass){
+  var wrap=document.createElement('span');wrap.className='apps-tool-pill'+(extraClass?' '+extraClass:'');
+  var main=document.createElement('button');main.type='button';main.className='apps-tool-main';main.title=tool.description+' — '+tool.url;
+  main.innerHTML=tool.name+' '+extLinkSvg;
+  main.addEventListener('click',function(){window.trek.openExternal(tool.url);});
+  wrap.appendChild(main);
+  if(tool.ios){
+    var ios=document.createElement('button');ios.type='button';ios.className='apps-store-link';ios.textContent='iOS';ios.title='Open on the App Store';
+    ios.addEventListener('click',function(ev){ev.stopPropagation();window.trek.openExternal(tool.ios);});
+    wrap.appendChild(ios);
+  }
+  if(tool.android){
+    var android=document.createElement('button');android.type='button';android.className='apps-store-link';android.textContent='Android';android.title='Open on Google Play';
+    android.addEventListener('click',function(ev){ev.stopPropagation();window.trek.openExternal(tool.android);});
+    wrap.appendChild(android);
+  }
+  return wrap;
+}
 function renderApps(){
   var el=document.getElementById('pane-apps-content');
   var data=toolsData;if(!data)return;
@@ -1292,12 +1333,7 @@ function renderAppsGrid(){
     head.appendChild(icon);head.appendChild(titleWrap);
     c.appendChild(head);
     var wrap=document.createElement('div');wrap.className='apps-tool-wrap';
-    tools.forEach(function(tool){
-      var pill=document.createElement('button');pill.type='button';pill.className='apps-tool-pill';pill.title=tool.description+' — '+tool.url;
-      pill.innerHTML=tool.name+' '+extLinkSvg;
-      pill.addEventListener('click',function(){window.trek.openExternal(tool.url);});
-      wrap.appendChild(pill);
-    });
+    tools.forEach(function(tool){wrap.appendChild(mkToolPill(tool));});
     c.appendChild(wrap);
     grid.appendChild(c);
   });
@@ -1349,14 +1385,18 @@ async function loadBriefings(){
   }));
 
   SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='';});
-  var multi=countries.length>1;
 
   results.forEach(function(r){
     var cc=r.cc,data=r.data,name=COUNTRIES[cc]||cc;
     function section(s){
       var target=getTarget(s);if(!target)return null;
-      if(multi){var head=document.createElement('div');head.className='briefing-country-head';head.textContent=flagEmoji(cc)+' '+name;target.appendChild(head);}
-      var box=document.createElement('div');box.className='briefing-country-block';target.appendChild(box);
+      var card=document.createElement('div');card.className='briefing-country-card';
+      var head=document.createElement('div');head.className='briefing-country-cardhead';
+      var titleEl=document.createElement('div');titleEl.className='briefing-country-cardtitle';titleEl.textContent=flagEmoji(cc)+' '+name;
+      var rem=document.createElement('button');rem.className='allowance-remove';rem.textContent='Remove';rem.addEventListener('click',function(){removeBriefingCountry(cc);});
+      head.appendChild(titleEl);head.appendChild(rem);card.appendChild(head);
+      var box=document.createElement('div');box.className='briefing-country-block';card.appendChild(box);
+      target.appendChild(card);
       return box;
     }
     if(data.error){
@@ -1709,7 +1749,6 @@ function renderHero(data){
       if(c.name)document.getElementById('wx-city').value=c.name;
       if(dutyCountries.indexOf(c.countryCode)===-1)addDutyCountry(c.countryCode);
       if(briefingCountries.indexOf(c.countryCode)===-1)addBriefingCountry(c.countryCode);
-      switchTab('overview');
     });
     pills.appendChild(p);
   });
@@ -1807,6 +1846,36 @@ document.getElementById('visa-btn').addEventListener('click',async function(){
     renderVisas(allVisas);
   }catch(e){document.getElementById('visa-results').innerHTML='<div class="status-text error">'+e.message+'</div>';}
   finally{btn.disabled=false;btn.textContent='Look up';rh();}
+});
+
+// Multi-country visa check — looks up visa requirements for every country
+// currently detected on the trip in one go, instead of one-at-a-time.
+function updateVisaMultiBtn(){
+  var btn=document.getElementById('visa-multi-btn');if(!btn)return;
+  if(detectedCountries.length>1){btn.style.display='inline-block';btn.textContent='Check all '+detectedCountries.length+' trip countries';}
+  else btn.style.display='none';
+}
+document.getElementById('visa-multi-btn').addEventListener('click',async function(){
+  var btn=this,passport=document.getElementById('val-passport').value.trim().toUpperCase();
+  var codes=detectedCountries.map(function(c){return c.countryCode;});
+  if(!passport){document.getElementById('visa-results').innerHTML='<div class="status-text error">Select your passport country first.</div>';return;}
+  if(!codes.length)return;
+  btn.disabled=true;document.getElementById('visa-btn').disabled=true;btn.textContent='Loading…';
+  document.getElementById('visa-results').innerHTML='<div class="status-text">Loading…</div>';
+  document.getElementById('visa-filter-row').style.display='none';
+  try{
+    var results=await Promise.all(codes.map(function(cc){
+      return invoke('/visa?passport='+encodeURIComponent(passport)+'&dest='+encodeURIComponent(cc),'GET')
+        .catch(function(e){return {error:e.message,dest:cc};});
+    }));
+    var failed=results.filter(function(v){return v&&v.error;});
+    allVisas=results.filter(function(v){return v&&!v.error;});
+    if(!allVisas.length){document.getElementById('visa-results').innerHTML='<div class="status-text error">Could not load visa info for any trip country.</div>';return;}
+    if(allVisas.length>1){document.getElementById('visa-filter-row').style.display='flex';document.getElementById('visa-count').textContent=allVisas.length;}
+    renderVisas(allVisas);
+    if(failed.length)showToast('Could not load visa info for '+failed.length+' of '+codes.length+' trip countries.');
+  }catch(e){document.getElementById('visa-results').innerHTML='<div class="status-text error">'+e.message+'</div>';}
+  finally{btn.disabled=false;document.getElementById('visa-btn').disabled=false;updateVisaMultiBtn();rh();}
 });
 
 // ══ HOLIDAYS ══
@@ -2230,17 +2299,49 @@ async function loadLiveEmergency(cc,card,numbersEl){
 // trip dates (only reservation-derived — misses hotel-only legs) and the
 // detected-airlines list (relies on parsing free-text metadata).
 document.getElementById('hero-config-btn').addEventListener('click',function(){
+  var btn=this;btn.classList.add('spinning');setTimeout(function(){btn.classList.remove('spinning');},500);
   var panel=document.getElementById('config-panel');
   var opening=panel.style.display==='none'||!panel.style.display;
   if(opening){
     document.getElementById('config-start').value=tripStart||'';
     document.getElementById('config-end').value=tripEnd||'';
     document.getElementById('config-dates-note').textContent=(tripDatesOverride&&(tripDatesOverride.startDate||tripDatesOverride.endDate))?'Manually overridden — auto-detected was '+(autoTripStart||'—')+' → '+(autoTripEnd||'—')+'.':'Auto-detected from your trip reservations.';
+    renderConfigCountryChips();
     renderConfigAirlineChips();
   }
   panel.style.display=opening?'block':'none';
   rh();
 });
+
+function renderConfigCountryChips(){
+  var el=document.getElementById('config-country-chips');el.innerHTML='';
+  document.getElementById('config-countries-note').textContent=countriesOverride.length?'Manually overridden.':'Auto-detected from your trip reservations & places.';
+  if(!detectedCountries.length){el.innerHTML='<span class="empty-note">No countries detected — add one manually below.</span>';return;}
+  detectedCountries.forEach(function(c){
+    var chip=document.createElement('span');chip.className='chip';
+    var lbl=document.createElement('span');lbl.textContent=COUNTRIES[c.countryCode]||c.countryCode;
+    var btn=document.createElement('button');btn.textContent='×';btn.addEventListener('click',function(){
+      persistCountriesOverride(detectedCountries.map(function(x){return x.countryCode;}).filter(function(cc){return cc!==c.countryCode;}));
+    });
+    chip.appendChild(lbl);chip.appendChild(btn);el.appendChild(chip);
+  });
+}
+async function persistCountriesOverride(next){
+  try{
+    var d=await invoke('/settings/countries','POST',{tripId:tripId,countries:next});
+    countriesOverride=d.countries||[];
+    detectedCountries=countriesOverride.length?countriesOverride.map(function(cc){return {countryCode:cc,name:COUNTRIES[cc]||cc};}):autoDetectedCountries.slice();
+    renderConfigCountryChips();renderHero({title:tripTitle,startDate:tripStart,endDate:tripEnd});renderEmergency();updateVisaMultiBtn();
+  }catch(_e){showToast('Could not save country overrides — please retry.');}
+}
+document.getElementById('config-country-add-btn').addEventListener('click',function(){
+  var cc=document.getElementById('val-config-country-add').value;
+  if(!cc)return;
+  var codes=detectedCountries.map(function(x){return x.countryCode;});
+  if(codes.indexOf(cc)===-1)persistCountriesOverride(codes.concat([cc]));
+});
+document.getElementById('config-countries-reset').addEventListener('click',function(){persistCountriesOverride([]);});
+initDropdown('config-country-add');
 
 function renderConfigAirlineChips(){
   var el=document.getElementById('config-airline-chips');el.innerHTML='';
@@ -2253,6 +2354,38 @@ function renderConfigAirlineChips(){
     chip.appendChild(lbl);chip.appendChild(btn);el.appendChild(chip);
   });
 }
+var configAirlineDebounce=null;
+function closeConfigAirlineDD(){document.getElementById('config-airline-dd').classList.remove('open');}
+async function loadConfigAirlineSuggestions(query){
+  var dd=document.getElementById('config-airline-dd');
+  try{
+    var data=await invoke('/airlines/search?q='+encodeURIComponent(query),'GET');
+    var airlines=data.airlines||[];
+    dd.innerHTML='';
+    if(!airlines.length){closeConfigAirlineDD();return;}
+    airlines.slice(0,50).forEach(function(a){
+      var opt=document.createElement('div');opt.className='country-opt';
+      opt.innerHTML='<span class="code">'+(a.iata||'')+'</span>'+a.name;
+      opt.addEventListener('mousedown',function(ev){
+        ev.preventDefault();
+        document.getElementById('config-airline-input').value='';
+        closeConfigAirlineDD();
+        if(detectedAirlines.indexOf(a.name)===-1)persistAirlinesOverride(detectedAirlines.concat([a.name]));
+      });
+      dd.appendChild(opt);
+    });
+    dd.classList.add('open');
+  }catch(_e){closeConfigAirlineDD();}
+}
+document.getElementById('config-airline-input').addEventListener('input',function(){
+  clearTimeout(configAirlineDebounce);
+  var q=this.value.trim();
+  configAirlineDebounce=setTimeout(function(){loadConfigAirlineSuggestions(q);},200);
+});
+document.getElementById('config-airline-input').addEventListener('focus',function(){loadConfigAirlineSuggestions(this.value.trim());});
+document.addEventListener('click',function(e){
+  if(!e.target.closest||(!e.target.closest('#config-airline-dd')&&e.target.id!=='config-airline-input'))closeConfigAirlineDD();
+});
 async function persistAirlinesOverride(next){
   try{
     var d=await invoke('/settings/airlines','POST',{tripId:tripId,airlines:next});
@@ -2305,15 +2438,23 @@ async function onContext(ctx){
   try{
     var d=await invoke('/trip-context?tripId='+tripId,'GET');
     autoTripStart=d.startDate||null;autoTripEnd=d.endDate||null;
-    if(d.detectedCountries&&d.detectedCountries.length){
-      detectedCountries=d.detectedCountries;
-      var first=detectedCountries[0];
-      setDD('dest',first.countryCode);setDD('hol',first.countryCode);setDD('wx',first.countryCode);
-      if(first.name)document.getElementById('wx-city').value=first.name;
-      setDD('ai-country',first.countryCode);
-    }
-    if(toolsData)renderApps();
+    autoDetectedCountries=d.detectedCountries||[];
   }catch(_e){initFailures.push('trip dates/countries');}
+  // Manual override (config panel) wins over auto-detected trip countries —
+  // detection can mis-tag a layover or miss a leg entirely.
+  try{
+    var cov=await invoke('/settings/countries?tripId='+tripId,'GET');
+    countriesOverride=cov.countries||[];
+  }catch(_e){}
+  detectedCountries=countriesOverride.length?countriesOverride.map(function(cc){return {countryCode:cc,name:COUNTRIES[cc]||cc};}):autoDetectedCountries.slice();
+  if(detectedCountries.length){
+    var first=detectedCountries[0];
+    setDD('dest',first.countryCode);setDD('hol',first.countryCode);setDD('wx',first.countryCode);
+    if(first.name)document.getElementById('wx-city').value=first.name;
+    setDD('ai-country',first.countryCode);
+  }
+  updateVisaMultiBtn();
+  if(toolsData)renderApps();
   // Manual override (config panel) wins over auto-detected trip dates —
   // auto-detection only looks at reservation metadata and can miss the true
   // trip span (e.g. a hotel-only leg with no flight/train reservation).

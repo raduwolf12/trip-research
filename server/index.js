@@ -1195,6 +1195,43 @@ module.exports = definePlugin({
       },
     },
 
+    // ── settings: manual override for auto-detected trip countries ───────────
+    // /trip-context detects countries from reservations/places/geocoding,
+    // which can mis-tag a leg (e.g. a layover airport) or miss one entirely.
+    // This lets the config panel pin the exact country list instead; an
+    // empty override falls back to whatever /trip-context auto-detected.
+    {
+      method: 'GET',
+      path: '/settings/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'countries_override')
+          const countries = row ? JSON.parse(typeof row === 'string' ? row : row.value) : []
+          return { countries: Array.isArray(countries) ? countries : [] }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/settings/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        const countries = Array.isArray(req.body?.countries) ? req.body.countries : []
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const clean = [...new Set(countries.map((c) => String(c).toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))]
+          await ctx.meta.set('trip', tripId, 'countries_override', JSON.stringify(clean))
+          return { countries: clean }
+        })
+        return safeJson(200, result)
+      },
+    },
+
     // ── settings: manual override for auto-detected trip dates ───────────────
     // Auto-detection (see /trip-context) only looks at reservation metadata,
     // which misses trips whose true start/end isn't reflected in any single
