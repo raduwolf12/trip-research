@@ -644,7 +644,7 @@ body.trek-ui {
     .hero-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;color:#e0e7ff;cursor:pointer;font-family:inherit;transition:background .12s;}
     .hero-pill:hover{background:rgba(255,255,255,.22);}
     .hero-pill.airline{background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.3);color:#fde68a;}
-    .hero-right{text-align:right;flex-shrink:0;}
+    .hero-right{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;}
     .hero-countdown{font-size:36px;font-weight:800;line-height:1;}
     .hero-countdown-label{font-size:11px;color:#a5b4fc;margin-top:2px;}
     .hero-duration{font-size:13px;color:#c7d2fe;margin-top:5px;}
@@ -676,6 +676,18 @@ body.trek-ui {
     button.primary{background:var(--accent);border:none;border-radius:var(--radius-sm);padding:7px 14px;color:var(--accent-text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .12s;}
     button.primary:hover:not(:disabled){background:var(--accent-hover);}
     button.primary:disabled{opacity:.5;cursor:default;}
+    button.secondary{background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:var(--radius-sm);padding:7px 14px;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .12s,color .12s;white-space:nowrap;}
+    button.secondary:hover:not(:disabled){background:var(--bg-hover);color:var(--text-primary);}
+
+    /* Trip settings (config) */
+    .hero-config-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:6px;transition:background .12s,transform .2s;}
+    .hero-config-btn:hover{background:rgba(255,255,255,.22);}
+    .hero-config-btn.spinning svg{animation:trek-config-spin .5s linear;}
+    @keyframes trek-config-spin{to{transform:rotate(90deg);}}
+    .config-panel{background:var(--bg-secondary);border-bottom:1px solid var(--border-primary);padding:16px 24px;}
+    .config-panel-inner{display:flex;flex-direction:column;gap:16px;}
+    .config-section .row{flex-wrap:wrap;}
+    .config-note{font-size:11.5px;color:var(--text-faint);margin-bottom:6px;}
 
     /* Visa */
     .visa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:8px;}
@@ -756,6 +768,10 @@ body.trek-ui {
     .l-row{display:flex;justify-content:space-between;font-size:12px;}
     .l-lbl{color:var(--text-muted);}.l-val{font-weight:700;color:var(--text-primary);}
     .fare-note{font-size:11px;color:var(--warning);margin-top:5px;line-height:1.4;}
+    .fare-tiers{margin-top:8px;padding-top:8px;border-top:1px solid var(--border-primary);}
+    .fare-tiers-title{font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;}
+    .trek-toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--danger);color:#fff;font-size:12.5px;font-weight:500;padding:8px 16px;border-radius:var(--radius-sm);box-shadow:var(--shadow-md);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:999;max-width:90%;text-align:center;}
+    .trek-toast--visible{opacity:1;transform:translateX(-50%) translateY(0);}
     .auto-tag{font-size:9.5px;font-weight:700;background:var(--success-soft);color:var(--success);border-radius:4px;padding:1px 5px;margin-left:4px;}
     .summary-card{background:var(--success-soft);border:1px solid color-mix(in oklch,var(--success) 30%,transparent);border-radius:var(--radius-md);padding:14px 16px;margin-top:12px;}
     .summary-title{font-size:13px;font-weight:700;color:var(--success);margin-bottom:8px;}
@@ -778,6 +794,10 @@ body.trek-ui {
     .briefing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;}
     @media(max-width:900px){.briefing-grid{grid-template-columns:repeat(2,1fr);}}
     @media(max-width:600px){.briefing-grid{grid-template-columns:1fr;}}
+    .briefing-country-card{border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:16px;background:var(--bg-card);box-shadow:var(--shadow-card);}
+    .briefing-country-card:last-child{margin-bottom:0;}
+    .briefing-country-cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .briefing-country-cardtitle{font-size:14px;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:7px;}
     .b-card{background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-card);}
     .b-card-title{font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:2px;}
     .b-card-subtitle{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin-bottom:12px;}
@@ -846,6 +866,38 @@ body.trek-ui {
     .status-text{color:var(--text-muted);font-size:13px;padding:6px 0;}
     .status-text.error{color:var(--danger);}
     .note-bar{font-size:11.5px;color:var(--warning);background:var(--warning-soft);border:1px solid color-mix(in oklch,var(--warning) 25%,transparent);border-radius:6px;padding:6px 10px;margin-bottom:8px;}
+
+    /* Apps */
+    .apps-country-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:18px;}
+    .apps-country-card{border-radius:var(--radius-lg);padding:14px 16px;background:color-mix(in oklch,var(--info) 7%,var(--bg-card));border:1px solid color-mix(in oklch,var(--info) 25%,var(--border-primary));box-shadow:var(--shadow-card);}
+    .apps-country-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+    .apps-country-flag{font-size:20px;line-height:1;}
+    .apps-country-name{font-size:13.5px;font-weight:800;color:var(--text-primary);}
+    .apps-tool-pill--country:hover{border-color:color-mix(in oklch,var(--info) 40%,var(--border-primary));}
+    .apps-tool-pill--country:hover .apps-tool-main{color:var(--text-primary);}
+    .apps-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+    .apps-search{flex:1;min-width:160px;}
+    .apps-catchips{display:flex;flex-wrap:wrap;gap:6px;}
+    .apps-catchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px solid var(--border-primary);background:var(--bg-secondary);color:var(--text-muted);cursor:pointer;transition:transform .1s,filter .1s,background .12s,color .12s,border-color .12s;user-select:none;}
+    .apps-catchip:hover{filter:brightness(1.03);transform:translateY(-1px);}
+    .apps-catchip.active{background:color-mix(in oklch,var(--chip-hue,var(--accent)) 22%,var(--bg-card));border-color:color-mix(in oklch,var(--chip-hue,var(--accent)) 45%,var(--border-primary));color:color-mix(in oklch,var(--chip-hue,var(--accent)) 80%,var(--text-primary));}
+
+    .apps-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+    .apps-cat{border-radius:var(--radius-lg);padding:16px 16px 14px;background:var(--bg-card);border:1px solid var(--border-primary);border-left:3px solid color-mix(in oklch,var(--cat-hue,var(--accent)) 65%,var(--border-primary));box-shadow:var(--shadow-card);transition:box-shadow .15s,transform .15s;}
+    .apps-cat:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
+    .apps-cat-head{display:flex;align-items:center;gap:9px;margin-bottom:11px;}
+    .apps-cat-icon{font-size:17px;width:30px;height:30px;flex-shrink:0;border-radius:9px;display:flex;align-items:center;justify-content:center;background:color-mix(in oklch,var(--cat-hue,var(--accent)) 20%,var(--bg-secondary));}
+    .apps-cat-title{font-size:13.5px;font-weight:800;color:var(--text-primary);}
+    .apps-cat-count{font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;}
+    .apps-tool-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+    .apps-tool-pill{display:inline-flex;align-items:stretch;border-radius:999px;background:var(--bg-secondary);border:1px solid var(--border-primary);overflow:hidden;transition:border-color .12s;}
+    .apps-tool-pill:hover{border-color:color-mix(in oklch,var(--cat-hue,var(--accent)) 40%,var(--border-primary));}
+    .apps-tool-main{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:6px 8px 6px 10px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:color .12s;}
+    .apps-tool-pill:hover .apps-tool-main{color:var(--text-primary);}
+    .apps-tool-main svg{flex-shrink:0;opacity:.55;}
+    .apps-store-link{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text-faint);padding:6px 8px;background:none;border:none;border-left:1px solid var(--border-primary);cursor:pointer;font-family:inherit;transition:color .12s,background .12s;}
+    .apps-store-link:hover{color:var(--text-primary);background:color-mix(in oklch,var(--cat-hue,var(--accent)) 14%,transparent);}
+    .apps-empty{grid-column:1/-1;text-align:center;padding:24px 0;color:var(--text-faint);font-size:13px;}
     .empty-note{font-size:13px;color:var(--text-faint);font-style:italic;padding:8px 0;}
     .results-wrap{max-height:500px;overflow-y:auto;}
     .content-area{background:var(--bg-primary);padding:0 24px 24px;}
@@ -860,9 +912,50 @@ body.trek-ui {
     <div class="hero-pills" id="hero-pills"></div>
   </div>
   <div class="hero-right">
+    <button class="hero-config-btn" id="hero-config-btn" title="Override trip dates & detected airlines" type="button"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
     <div class="hero-countdown" id="hero-countdown"></div>
     <div class="hero-countdown-label" id="hero-countdown-label"></div>
     <div class="hero-duration" id="hero-duration"></div>
+  </div>
+</div>
+
+<!-- Trip settings: manual overrides for auto-detected countries, dates & airlines -->
+<div class="config-panel" id="config-panel" style="display:none;">
+  <div class="config-panel-inner">
+    <div class="config-section">
+      <div class="section-label" style="margin-top:0;">Trip countries</div>
+      <div class="config-note" id="config-countries-note"></div>
+      <div class="chip-wrap" id="config-country-chips"></div>
+      <div class="row">
+        <div class="country-wrap" id="wrap-config-country-add"><button type="button" class="country-display" id="btn-config-country-add"><span id="lbl-config-country-add">Add a country…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-config-country-add"><input class="country-search" id="search-config-country-add" placeholder="Search…"/><div class="country-list" id="list-config-country-add"></div></div><input type="hidden" id="val-config-country-add"/></div>
+        <button class="primary" id="config-country-add-btn">Add</button>
+        <button class="secondary" id="config-countries-reset">Reset to auto-detected</button>
+      </div>
+    </div>
+    <div class="config-section">
+      <div class="section-label">Trip dates</div>
+      <div class="config-note" id="config-dates-note"></div>
+      <div class="row">
+        <input type="date" id="config-start" style="flex:1;"/>
+        <span style="font-size:12px;color:var(--text-faint);">→</span>
+        <input type="date" id="config-end" style="flex:1;"/>
+        <button class="primary" id="config-dates-save">Save</button>
+        <button class="secondary" id="config-dates-reset">Reset to auto-detected</button>
+      </div>
+    </div>
+    <div class="config-section">
+      <div class="section-label">Detected airlines</div>
+      <div class="config-note" id="config-airlines-note"></div>
+      <div class="chip-wrap" id="config-airline-chips"></div>
+      <div class="row">
+        <div class="country-wrap" id="wrap-config-airline-add" style="flex:1;">
+          <input type="text" id="config-airline-input" placeholder="Add an airline name…" style="width:100%;"/>
+          <div class="country-dd" id="config-airline-dd"></div>
+        </div>
+        <button class="primary" id="config-airline-add">Add</button>
+        <button class="secondary" id="config-airlines-reset">Reset to auto-detected</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -879,35 +972,40 @@ body.trek-ui {
     <button class="tab" id="tab-duty" onclick="switchTab('duty')"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Duty-Free</button>
     <button class="tab" id="tab-luggage" onclick="switchTab('luggage')"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2Z"/><path d="M8 18V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14"/><path d="M10 18h4"/></svg> Luggage</button>
     <button class="tab" id="tab-emergency" onclick="switchTab('emergency')"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v1z"/><path d="M21 12h1"/><path d="M18.5 4.5 18 5"/><path d="M2 12h1"/><path d="M12 2v1"/><path d="m5.5 4.5.5.5"/></svg> Emergency</button>
+    <button class="tab" id="tab-apps" onclick="switchTab('apps')"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg> Apps</button>
   </div>
 
   <!-- ══ OVERVIEW ══ -->
   <div class="pane active" id="pane-overview">
+    <div class="section-label" style="margin-top:0;">Countries on this trip</div>
+    <div class="chip-wrap" id="briefing-chips"></div>
     <div class="row" style="margin-bottom:14px;">
-      <div class="country-wrap" id="wrap-ai-country"><button type="button" class="country-display" id="btn-ai-country"><span id="lbl-ai-country">Select destination…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-ai-country"><input class="country-search" id="search-ai-country" placeholder="Search…"/><div class="country-list" id="list-ai-country"></div></div><input type="hidden" id="val-ai-country"/></div>
+      <div class="country-wrap" id="wrap-ai-country"><button type="button" class="country-display" id="btn-ai-country"><span id="lbl-ai-country">Add a country…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-ai-country"><input class="country-search" id="search-ai-country" placeholder="Search…"/><div class="country-list" id="list-ai-country"></div></div><input type="hidden" id="val-ai-country"/></div>
       <input type="hidden" id="val-ai-country-name"/>
+      <button class="primary" id="briefing-add-btn">Add</button>
     </div>
-    <div id="pane-overview-content"><div class="status-text">Select a destination above or click a country pill in the header.</div></div>
+    <div class="note-bar">This same country list drives the Safety, Health, Culture, and Connectivity tabs below — add every country on your trip once here.</div>
+    <div id="pane-overview-content"><div class="status-text">Add a country above or click a country pill in the header.</div></div>
   </div>
 
   <!-- ══ SAFETY ══ -->
   <div class="pane" id="pane-safety">
-    <div id="pane-safety-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+    <div id="pane-safety-content"><div class="status-text">Add a country in the Overview tab to load data.</div></div>
   </div>
 
   <!-- ══ HEALTH ══ -->
   <div class="pane" id="pane-health">
-    <div id="pane-health-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+    <div id="pane-health-content"><div class="status-text">Add a country in the Overview tab to load data.</div></div>
   </div>
 
   <!-- ══ CULTURE ══ -->
   <div class="pane" id="pane-culture">
-    <div id="pane-culture-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+    <div id="pane-culture-content"><div class="status-text">Add a country in the Overview tab to load data.</div></div>
   </div>
 
   <!-- ══ CONNECTIVITY ══ -->
   <div class="pane" id="pane-connectivity">
-    <div id="pane-connectivity-content"><div class="status-text">Select a destination from the Overview tab to load data.</div></div>
+    <div id="pane-connectivity-content"><div class="status-text">Add a country in the Overview tab to load data.</div></div>
   </div>
 
   <!-- ══ VISA ══ -->
@@ -916,6 +1014,7 @@ body.trek-ui {
       <div class="country-wrap" id="wrap-passport"><button type="button" class="country-display" id="btn-passport"><span id="lbl-passport">Your passport…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-passport"><input class="country-search" id="search-passport" placeholder="Search…"/><div class="country-list" id="list-passport"></div></div><input type="hidden" id="val-passport"/></div>
       <div class="country-wrap" id="wrap-dest"><button type="button" class="country-display" id="btn-dest"><span id="lbl-dest">Destination (optional)…</span><span class="arrow">▼</span></button><div class="country-dd" id="dd-dest"><input class="country-search" id="search-dest" placeholder="Search…"/><div class="country-list" id="list-dest"></div></div><input type="hidden" id="val-dest"/></div>
       <button class="primary" id="visa-btn">Look up</button>
+      <button class="secondary" id="visa-multi-btn" style="display:none;">Check all trip countries</button>
     </div>
     <div class="filter-row" id="visa-filter-row" style="display:none;">
       <select class="filter-select" id="visa-cat-filter"><option value="">All types</option><option value="Visa Free">Visa Free</option><option value="Visa on Arrival">Visa on Arrival</option><option value="E-Visa">E-Visa</option><option value="ETA">ETA</option><option value="Visa Required">Visa Required</option></select>
@@ -981,9 +1080,15 @@ body.trek-ui {
   <!-- ══ EMERGENCY ══ -->
   <div class="pane" id="pane-emergency">
     <div class="disclaimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;flex-shrink:0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.36 12a19.79 19.79 0 0 1-3-8.59A2 2 0 0 1 3.34 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.38a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Local emergency numbers for your trip countries. In an emergency always also contact your embassy — numbers below are general reference only.</div>
-    <div class="emergency-grid" id="emergency-grid"><div class="status-text">Loading…</div></div>
+    <div class="emergency-grid" id="emergency-grid"><div class="trek-skeleton" style="height:90px;width:100%;"></div><div class="trek-skeleton" style="height:90px;width:100%;"></div></div>
+  </div>
+
+  <!-- ══ APPS & TIPS ══ -->
+  <div class="pane" id="pane-apps">
+    <div id="pane-apps-content"><div class="b-skeleton"></div><div class="b-skeleton" style="height:100px;"></div></div>
   </div>
 </div>
+
 
 <script>
 var COUNTRIES={"AF":"Afghanistan","AL":"Albania","DZ":"Algeria","AS":"American Samoa","AD":"Andorra","AO":"Angola","AI":"Anguilla","AQ":"Antarctica","AG":"Antigua and Barbuda","AR":"Argentina","AM":"Armenia","AW":"Aruba","AU":"Australia","AT":"Austria","AZ":"Azerbaijan","BS":"Bahamas","BH":"Bahrain","BD":"Bangladesh","BB":"Barbados","BY":"Belarus","BE":"Belgium","BZ":"Belize","BJ":"Benin","BM":"Bermuda","BT":"Bhutan","BO":"Bolivia","BQ":"Bonaire","BA":"Bosnia and Herzegovina","BW":"Botswana","BR":"Brazil","BN":"Brunei","BG":"Bulgaria","BF":"Burkina Faso","BI":"Burundi","CV":"Cabo Verde","KH":"Cambodia","CM":"Cameroon","CA":"Canada","CF":"Central African Republic","TD":"Chad","CL":"Chile","CN":"China","CO":"Colombia","KM":"Comoros","CG":"Congo","CD":"DR Congo","CR":"Costa Rica","HR":"Croatia","CU":"Cuba","CY":"Cyprus","CZ":"Czechia","CI":"Côte d'Ivoire","DK":"Denmark","DJ":"Djibouti","DM":"Dominica","DO":"Dominican Republic","EC":"Ecuador","EG":"Egypt","SV":"El Salvador","GQ":"Equatorial Guinea","ER":"Eritrea","EE":"Estonia","SZ":"Eswatini","ET":"Ethiopia","FJ":"Fiji","FI":"Finland","FR":"France","GA":"Gabon","GM":"Gambia","GE":"Georgia","DE":"Germany","GH":"Ghana","GR":"Greece","GL":"Greenland","GD":"Grenada","GT":"Guatemala","GN":"Guinea","GW":"Guinea-Bissau","GY":"Guyana","HT":"Haiti","HN":"Honduras","HK":"Hong Kong","HU":"Hungary","IS":"Iceland","IN":"India","ID":"Indonesia","IR":"Iran","IQ":"Iraq","IE":"Ireland","IL":"Israel","IT":"Italy","JM":"Jamaica","JP":"Japan","JO":"Jordan","KZ":"Kazakhstan","KE":"Kenya","KI":"Kiribati","KP":"North Korea","KR":"South Korea","KW":"Kuwait","KG":"Kyrgyzstan","LA":"Laos","LV":"Latvia","LB":"Lebanon","LS":"Lesotho","LR":"Liberia","LY":"Libya","LI":"Liechtenstein","LT":"Lithuania","LU":"Luxembourg","MO":"Macao","MG":"Madagascar","MW":"Malawi","MY":"Malaysia","MV":"Maldives","ML":"Mali","MT":"Malta","MH":"Marshall Islands","MR":"Mauritania","MU":"Mauritius","MX":"Mexico","FM":"Micronesia","MD":"Moldova","MC":"Monaco","MN":"Mongolia","ME":"Montenegro","MA":"Morocco","MZ":"Mozambique","MM":"Myanmar","NA":"Namibia","NR":"Nauru","NP":"Nepal","NL":"Netherlands","NZ":"New Zealand","NI":"Nicaragua","NE":"Niger","NG":"Nigeria","MK":"North Macedonia","NO":"Norway","OM":"Oman","PK":"Pakistan","PW":"Palau","PA":"Panama","PG":"Papua New Guinea","PY":"Paraguay","PE":"Peru","PH":"Philippines","PL":"Poland","PT":"Portugal","QA":"Qatar","RO":"Romania","RU":"Russia","RW":"Rwanda","KN":"Saint Kitts","LC":"Saint Lucia","VC":"Saint Vincent","WS":"Samoa","SM":"San Marino","ST":"Sao Tome","SA":"Saudi Arabia","SN":"Senegal","RS":"Serbia","SC":"Seychelles","SL":"Sierra Leone","SG":"Singapore","SK":"Slovakia","SI":"Slovenia","SB":"Solomon Islands","SO":"Somalia","ZA":"South Africa","SS":"South Sudan","ES":"Spain","LK":"Sri Lanka","SD":"Sudan","SR":"Suriname","SE":"Sweden","CH":"Switzerland","SY":"Syria","TW":"Taiwan","TJ":"Tajikistan","TZ":"Tanzania","TH":"Thailand","TL":"Timor-Leste","TG":"Togo","TO":"Tonga","TT":"Trinidad and Tobago","TN":"Tunisia","TM":"Turkmenistan","TR":"Turkey","UG":"Uganda","UA":"Ukraine","AE":"United Arab Emirates","GB":"United Kingdom","US":"United States","UY":"Uruguay","UZ":"Uzbekistan","VU":"Vanuatu","VE":"Venezuela","VN":"Vietnam","YE":"Yemen","ZM":"Zambia","ZW":"Zimbabwe"};
@@ -993,12 +1098,55 @@ var COUNTRIES={"AF":"Afghanistan","AL":"Albania","DZ":"Algeria","AS":"American S
 
 var DUTY_FREE={SE:{name:"Sweden (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"Arriving from within EU: no fixed limits for personal use."},DK:{name:"Denmark (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"Arriving from within EU: no fixed limits for personal use."},DE:{name:"Germany (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"EU arrivals: no fixed limits for personal use."},FR:{name:"France (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"EU arrivals: no fixed limits for personal use."},GB:{name:"United Kingdom",alcohol:"18L wine + 42L beer + 4L spirits",tobacco:"200 cigarettes or 250g tobacco",goods:"£390",cash:"Declare £10,000+",note:""},NO:{name:"Norway",alcohol:"1L spirits + 1.5L wine + 2L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"NOK 6,000",cash:"Declare NOK 25,000+",note:"Not in EU — full allowance always applies."},CH:{name:"Switzerland",alcohol:"1L >18% + 2L ≤18%",tobacco:"250g total",goods:"CHF 300",cash:"No fixed limit",note:"Not in EU."},US:{name:"United States",alcohol:"1L (age 21+ only)",tobacco:"200 cigarettes or 100 cigars",goods:"$800 personal exemption",cash:"Declare $10,000+",note:"Cuban cigars restricted."},CA:{name:"Canada",alcohol:"1.5L wine or 1.14L spirits or 8.5L beer",tobacco:"200 cigarettes",goods:"CAD 200–800 (depends on absence duration)",cash:"Declare CAD 10,000+",note:""},JP:{name:"Japan",alcohol:"3 bottles (760ml each)",tobacco:"200 cigarettes",goods:"¥200,000",cash:"Declare ¥1,000,000+",note:""},CN:{name:"China",alcohol:"1.5L",tobacco:"400 cigarettes",goods:"RMB 5,000",cash:"Declare $5,000+ USD or RMB 20,000+",note:""},KR:{name:"South Korea",alcohol:"1L",tobacco:"200 cigarettes",goods:"$800",cash:"Declare $10,000+",note:""},TH:{name:"Thailand",alcohol:"1L",tobacco:"200 cigarettes",goods:"THB 20,000",cash:"Declare $20,000+ equivalent",note:""},SG:{name:"Singapore",alcohol:"1L spirits + 1L wine + 1L beer (48h+ stay)",tobacco:"None — all tobacco is dutiable",goods:"SGD 500 (48h+) · SGD 100 (<48h)",cash:"Declare SGD 20,000+",note:"⚠ Zero tobacco allowance trips people up!"},AU:{name:"Australia",alcohol:"2.25L",tobacco:"25 cigarettes or 25g tobacco",goods:"AUD 900",cash:"Declare AUD 10,000+",note:""},NZ:{name:"New Zealand",alcohol:"~4.5L combined",tobacco:"50 cigarettes or 50g tobacco",goods:"NZD 700",cash:"Declare NZD 10,000+",note:""},AE:{name:"United Arab Emirates",alcohol:"4L (non-Muslim visitors only)",tobacco:"400 cigarettes",goods:"AED 3,000",cash:"Declare large amounts",note:"Alcohol rules vary by emirate."},IN:{name:"India",alcohol:"2L",tobacco:"100 cigarettes or 125g tobacco",goods:"₹50,000",cash:"Declare $5,000 cash / $10,000 total",note:""},MX:{name:"Mexico",alcohol:"3L",tobacco:"200 cigarettes",goods:"$500 air · $300 land",cash:"Declare $10,000+",note:""},RO:{name:"Romania (EU)",alcohol:"1L spirits + 4L wine + 16L beer",tobacco:"200 cigarettes or 250g tobacco",goods:"€430 air/sea · €300 land",cash:"Declare €10,000+",note:"EU arrivals: no fixed limits for personal use."}};
 
-var AIRLINES={"SAS":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Basic/Light: often no free checked bag."},"Norwegian":{co:"55×40×23",ck:10,dc:"158 linear cm",dk:20,di:false,note:"LowFare: checked bag is a paid add-on."},"Finnair":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"Ryanair":{co:"40×20×25",ck:10,dc:"Priority = larger cabin bag",dk:20,di:false,note:"Only a small under-seat bag is free by default."},"easyJet":{co:"45×36×20",ck:null,dc:"Hold bag optional",dk:23,di:false,note:"No weight limit on cabin bag if under seat."},"Wizz Air":{co:"40×30×20",ck:10,dc:"Larger bag optional",dk:20,di:false,note:"Only small personal item free by default."},"Wizzair":{co:"40×30×20",ck:10,dc:"Larger bag optional",dk:20,di:false,note:"Only small personal item free by default."},"Lufthansa":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Economy Light: no free checked bag."},"KLM":{co:"55×35×25",ck:12,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"Air France":{co:"55×35×25",ck:12,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"British Airways":{co:"56×45×25",ck:23,dc:"90×75×43 (approx)",dk:23,di:true,note:"Basic fares on some routes: cabin bag only."},"AIR CHINA":{co:"55×40×20",ck:5,dc:"158 linear cm",dk:23,di:true,note:"Economy: 1 free checked bag on most routes."},"Air China":{co:"55×40×20",ck:5,dc:"158 linear cm",dk:23,di:true,note:"Economy: 1 free checked bag on most routes."},"ANA":{co:"55×40×25",ck:10,dc:"158 linear cm",dk:23,di:true,note:""},"JAL":{co:"55×40×25",ck:10,dc:"158 linear cm",dk:23,di:true,note:""},"Singapore Airlines":{co:"55×38×20",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Emirates":{co:"55×38×22",ck:7,dc:"158 linear cm",dk:23,di:true,note:"Special Economy: reduced checked allowance."},"Qatar Airways":{co:"50×37×25",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Turkish Airlines":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:""},"Qantas":{co:"56×36×23",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Cathay Pacific":{co:"56×36×23",ck:7,dc:"158 linear cm",dk:23,di:true,note:""}};
+var AIRLINES={"SAS":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Basic/Light: often no free checked bag."},"Norwegian":{co:"55×40×23",ck:10,dc:"158 linear cm",dk:20,di:false,note:"LowFare: checked bag is a paid add-on."},"Finnair":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"Ryanair":{co:"40×20×25",ck:10,dc:"Priority = larger cabin bag",dk:20,di:false,note:"Only a small under-seat bag is free by default."},"easyJet":{co:"45×36×20",ck:null,dc:"Hold bag optional",dk:23,di:false,note:"No weight limit on cabin bag if under seat."},"Wizz Air":{co:"40×30×20",ck:10,dc:"Larger bag optional",dk:20,di:false,note:"Only small personal item free by default."},"Lufthansa":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:"Economy Light: no free checked bag."},"KLM":{co:"55×35×25",ck:12,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"Air France":{co:"55×35×25",ck:12,dc:"158 linear cm",dk:23,di:true,note:"Light fares: no free checked bag."},"British Airways":{co:"56×45×25",ck:23,dc:"90×75×43 (approx)",dk:23,di:true,note:"Basic fares on some routes: cabin bag only."},"Air China":{co:"55×40×20",ck:5,dc:"158 linear cm",dk:23,di:true,note:"Economy: 1 free checked bag on most routes."},"ANA":{co:"55×40×25",ck:10,dc:"158 linear cm",dk:23,di:true,note:""},"JAL":{co:"55×40×25",ck:10,dc:"158 linear cm",dk:23,di:true,note:""},"Singapore Airlines":{co:"55×38×20",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Emirates":{co:"55×38×22",ck:7,dc:"158 linear cm",dk:23,di:true,note:"Special Economy: reduced checked allowance."},"Qatar Airways":{co:"50×37×25",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Turkish Airlines":{co:"55×40×23",ck:8,dc:"158 linear cm",dk:23,di:true,note:""},"Qantas":{co:"56×36×23",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"Cathay Pacific":{co:"56×36×23",ck:7,dc:"158 linear cm",dk:23,di:true,note:""},"American Airlines":{co:"56×36×23",ck:null,dc:"158 linear cm",dk:23,di:true,note:"Basic Economy: carry-on only on some fares."},"BA CityFlyer":{co:"56×45×25",ck:23,dc:"90×75×43 (approx)",dk:23,di:true,note:"Cabin bag weight counted with personal item."},"Eastern Airways":{co:"55×35×20",ck:10,dc:"Per-bag increments",dk:15,di:false,note:"Checked bags charged in 15kg increments."},"ITA Airways":{co:"55×35×25",ck:8,dc:"158 linear cm",dk:23,di:false,note:"Light fares: no free checked bag."},"Jet2":{co:"56×45×25",ck:10,dc:"Per-bag increments",dk:22,di:false,note:"Checked bag is a paid add-on."},"Loganair":{co:"Small personal item",ck:6,dc:"Per-bag increments",dk:22,di:true,note:""},"TUI":{co:"55×40×20",ck:10,dc:"Per-bag increments",dk:20,di:true,note:""},"Virgin Atlantic":{co:"56×36×23",ck:10,dc:"90×75×43",dk:23,di:false,note:"Economy Light: no free checked bag."},"Aer Lingus":{co:"55×40×24",ck:10,dc:"158 linear cm",dk:20,di:false,note:"Basic fares: checked bag is a paid add-on."},"United Airlines":{co:"55×35×23",ck:8,dc:"158 linear cm",dk:23,di:false,note:"Basic Economy: no free checked bag; Economy Plus and above included.",tiers:[{t:"Basic Economy",b:0,kg:23,fee:"$35–75"},{t:"Economy Plus/Full",b:1,kg:23,fee:"Free–$30"},{t:"Business/First",b:2,kg:32,fee:"Included"}]},
+"Aeroflot":{co:null,ck:null,dc:"80 in / 203 cm linear",dk:23,di:false,note:"Fees/tiers vary by fare class.",tiers:[{t:"Lite/Promo Lite",b:0,kg:23,fee:"$39"},{t:"Classic/Comfort",b:1,kg:23,fee:"Included"},{t:"Business",b:1,kg:32,fee:"Included (2 on Flex)"}]},
+"AeroMexico":{co:null,ck:null,dc:"158 linear cm",dk:25,di:false,note:"Allowance is route-dependent.",tiers:[{t:"Basic/Classic",b:1,kg:25,fee:"$30–145"},{t:"Premier/Premier Light",b:2,kg:32,fee:"Included"}]},
+"Air Canada":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"Fees/tiers vary by fare class.",tiers:[{t:"Basic/Standard",b:1,kg:23,fee:"$35"},{t:"Economy Flex",b:1,kg:23,fee:"Included"},{t:"Business",b:2,kg:32,fee:"Included"}]},
+"Air Europa Líneas Aéreas":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"Allowance varies by route.",tiers:[{t:"Economy Lite",b:0,kg:23,fee:"Varies"},{t:"Economy/Premium Standard",b:1,kg:23,fee:"Included"},{t:"Business",b:2,kg:32,fee:"Included"}]},
+"Air India":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"Allowance varies by route (weight vs. piece concept).",tiers:[{t:"Economy",b:2,kg:23,fee:"Included"},{t:"Business/First",b:2,kg:32,fee:"Included"}]},
+"Air New Zealand":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"",tiers:[{t:"Seat+bag/Economy/Flexichange",b:1,kg:23,fee:"Included"},{t:"Premium Economy",b:2,kg:23,fee:"Included"},{t:"Business Premier",b:3,kg:32,fee:"Included"}]},
+"Allegiant Air":{co:null,ck:null,dc:"80 in / 203 cm linear",dk:22,di:false,note:"No free checked bag on any fare.",tiers:[{t:"Main Cabin",b:0,kg:22,fee:"$15–75"}]},
+"Asiana Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"",tiers:[{t:"Economy",b:1,kg:23,fee:"Included"},{t:"Business",b:2,kg:32,fee:"Included"}]},
+"Avianca":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"XS/S",b:0,kg:23,fee:"Varies"},{t:"M/L",b:1,kg:23,fee:"Included"},{t:"XXL",b:2,kg:32,fee:"Included"}]},
+"Cape Air":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"No free checked bag.",tiers:[{t:"Main Cabin",b:0,kg:23,fee:"$30–110"}]},
+"Caribbean Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Lite",b:0,kg:23,fee:"$30"},{t:"Classic/Flex",b:1,kg:23,fee:"Included"},{t:"Biz/Biz Flex",b:3,kg:32,fee:"Included"}]},
+"China Eastern":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"Allowance is route-dependent.",tiers:[{t:"Basic Economy",b:1,kg:23,fee:"Included where offered"},{t:"Standard/Premium Economy",b:2,kg:23,fee:"Included"},{t:"Business/First",b:2,kg:32,fee:"Included"}]},
+"China Southern":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"Allowance is route-dependent.",tiers:[{t:"Economy/Premium Economy",b:2,kg:23,fee:"Included"},{t:"Business/First",b:2,kg:32,fee:"Included"}]},
+"Copa Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Basic",b:0,kg:23,fee:"$30–40"},{t:"Promo/Classic/Full",b:1,kg:23,fee:"Included"},{t:"Business",b:2,kg:32,fee:"Included"}]},
+"Delta Air Lines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Basic/Main/Comfort+",b:0,kg:23,fee:"$35–75"},{t:"Delta One/Premium Select/First",b:2,kg:32,fee:"Included"}]},
+"EL AL":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Economy Lite",b:0,kg:23,fee:"$90 at airport"},{t:"Economy Classic/Flex",b:1,kg:23,fee:"Included"},{t:"Business",b:1,kg:32,fee:"Included"}]},
+"Etihad Airways":{co:null,ck:null,dc:"81 in / 207 cm linear",dk:23,di:false,note:"Weight concept on many routes; varies widely.",tiers:[{t:"Economy Sale/Value",b:2,kg:23,fee:"Included (piece routes)"},{t:"Economy Choice/ChoicePlus",b:2,kg:23,fee:"Included"},{t:"Business",b:2,kg:32,fee:"Included"}]},
+"Eurowings":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Basic",b:0,kg:23,fee:"From €17"},{t:"Smart",b:1,kg:23,fee:"Included"},{t:"BIZclass",b:2,kg:32,fee:"Included"}]},
+"EVA Air":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"",tiers:[{t:"Economy Discount",b:1,kg:23,fee:"Included"},{t:"Economy Basic/Standard/Up",b:2,kg:23,fee:"Included"},{t:"Business/Premium Laurel",b:2,kg:32,fee:"Included"}]},
+"Garuda Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"Allowance is route-dependent.",tiers:[{t:"Economy",b:2,kg:23,fee:"Included (US routes)"},{t:"Business/First",b:2,kg:32,fee:"Included"}]},
+"Hainan Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"Allowance is route-dependent.",tiers:[{t:"Economy",b:1,kg:23,fee:"Included"},{t:"Business",b:2,kg:32,fee:"Included"}]},
+"Hawaiian Airlines":{co:null,ck:null,dc:"157 cm linear",dk:23,di:false,note:"",tiers:[{t:"Main Cabin",b:0,kg:23,fee:"$30–40"},{t:"First/International Fares",b:2,kg:23,fee:"Included"}]},
+"Icelandair":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Economy Light",b:0,kg:23,fee:"$32–189"},{t:"Economy Standard/Flex",b:1,kg:23,fee:"Included"},{t:"Saga Premium/Flex",b:2,kg:32,fee:"Included"}]},
+"JetBlue Airways":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"Fee varies by route (domestic vs. transatlantic).",tiers:[{t:"Blue Basic/Blue/Blue Extra",b:0,kg:23,fee:"$35–70"},{t:"Blue Plus/Mint/Mosaic",b:1,kg:23,fee:"Included"}]},
+"Korean Air":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"Allowance is route-dependent.",tiers:[{t:"Economy",b:2,kg:23,fee:"Included"},{t:"Prestige",b:2,kg:32,fee:"Included"},{t:"First",b:3,kg:32,fee:"Included"}]},
+"Kuwait Airways":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"",tiers:[{t:"Economy",b:2,kg:23,fee:"Included"},{t:"Business",b:2,kg:32,fee:"Included"},{t:"First",b:3,kg:32,fee:"Included"}]},
+"Norwegian Air":{co:null,ck:null,dc:"118 in / 300 cm linear",dk:23,di:false,note:"",tiers:[{t:"LowFare",b:0,kg:23,fee:"$16–130"},{t:"LowFare+",b:1,kg:23,fee:"Included"},{t:"Flex/Premium",b:2,kg:32,fee:"Included"}]},
+"Southwest Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:true,note:"2 free checked bags on every fare.",tiers:[{t:"Main Cabin (all fares)",b:2,kg:23,fee:"Included"}]},
+"Sun Country Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"No free checked bag.",tiers:[{t:"Main Cabin",b:0,kg:23,fee:"Varies by route"}]},
+"Spirit Airlines":{co:null,ck:null,dc:"158 linear cm",dk:18,di:false,note:"",tiers:[{t:"Value/Premium Economy",b:0,kg:18,fee:"$54–99"},{t:"First",b:1,kg:18,fee:"Included"}]},
+"Swiss International Airlines":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Light",b:0,kg:23,fee:"$20–105"},{t:"Classic/Flex",b:1,kg:23,fee:"Included"},{t:"Business/First",b:2,kg:32,fee:"Included"}]},
+"TAP Air Portugal":{co:null,ck:null,dc:"158 linear cm",dk:23,di:false,note:"",tiers:[{t:"Discount",b:0,kg:23,fee:"$37–215"},{t:"Basic/Classic/Plus",b:1,kg:23,fee:"Included"},{t:"Executive/Top Executive",b:2,kg:32,fee:"Included"}]},
+"Thai Airways":{co:null,ck:null,dc:"No size restriction",dk:23,di:true,note:"Allowance is route-dependent (weight concept).",tiers:[{t:"Economy",b:0,kg:23,fee:"Included (weight-based)"},{t:"Royal Silk/Royal First",b:3,kg:32,fee:"Included"}]},
+"VIVA Aerobus":{co:null,ck:null,dc:"158 linear cm",dk:25,di:false,note:"",tiers:[{t:"Zero/Light",b:0,kg:25,fee:"$28–110"},{t:"Smart",b:1,kg:25,fee:"Included"}]},
+"Volaris":{co:null,ck:null,dc:"158 linear cm",dk:25,di:false,note:"",tiers:[{t:"Zero/Basic",b:0,kg:25,fee:"$48–300"},{t:"Plus",b:1,kg:25,fee:"Included"}]},
+"WestJet":{co:null,ck:null,dc:"157 cm linear",dk:23,di:false,note:"",tiers:[{t:"Basic/Econo/Member Exclusive",b:0,kg:23,fee:"$35–113"},{t:"Econo Flex",b:1,kg:23,fee:"Included"},{t:"Premium/Business",b:2,kg:32,fee:"Included"}]}
+};
 
 var EMERGENCY={DK:{name:"Denmark",police:"114",fire:"112",ambulance:"112",embassy_hint:"Find DK embassies at um.dk"},SE:{name:"Sweden",police:"114",fire:"112",ambulance:"112"},NO:{name:"Norway",police:"112",fire:"110",ambulance:"113"},FI:{name:"Finland",police:"112",fire:"112",ambulance:"112"},DE:{name:"Germany",police:"110",fire:"112",ambulance:"112"},FR:{name:"France",police:"17",fire:"18",ambulance:"15"},GB:{name:"United Kingdom",police:"999",fire:"999",ambulance:"999"},IT:{name:"Italy",police:"113",fire:"115",ambulance:"118"},ES:{name:"Spain",police:"091",fire:"080",ambulance:"061"},NL:{name:"Netherlands",police:"112",fire:"112",ambulance:"112"},PT:{name:"Portugal",police:"112",fire:"112",ambulance:"112"},CH:{name:"Switzerland",police:"117",fire:"118",ambulance:"144"},AT:{name:"Austria",police:"133",fire:"122",ambulance:"144"},BE:{name:"Belgium",police:"101",fire:"100",ambulance:"100"},PL:{name:"Poland",police:"112",fire:"998",ambulance:"999"},CZ:{name:"Czechia",police:"158",fire:"150",ambulance:"155"},HU:{name:"Hungary",police:"107",fire:"105",ambulance:"104"},RO:{name:"Romania",police:"112",fire:"112",ambulance:"112"},GR:{name:"Greece",police:"100",fire:"199",ambulance:"166"},HR:{name:"Croatia",police:"192",fire:"193",ambulance:"194"},US:{name:"United States",police:"911",fire:"911",ambulance:"911"},CA:{name:"Canada",police:"911",fire:"911",ambulance:"911"},MX:{name:"Mexico",police:"911",fire:"911",ambulance:"911"},BR:{name:"Brazil",police:"190",fire:"193",ambulance:"192"},AR:{name:"Argentina",police:"101",fire:"100",ambulance:"107"},JP:{name:"Japan",police:"110",fire:"119",ambulance:"119",embassy_hint:"Your country's embassy in Tokyo: search 'embassy Tokyo [country]'"},CN:{name:"China",police:"110",fire:"119",ambulance:"120",embassy_hint:"Emergency hotline for foreigners: 12348"},KR:{name:"South Korea",police:"112",fire:"119",ambulance:"119",embassy_hint:"Tourist helpline: 1330 (24h, English)"},TH:{name:"Thailand",police:"191",fire:"199",ambulance:"1669",embassy_hint:"Tourist police: 1155"},SG:{name:"Singapore",police:"999",fire:"995",ambulance:"995"},MY:{name:"Malaysia",police:"999",fire:"994",ambulance:"999"},ID:{name:"Indonesia",police:"110",fire:"113",ambulance:"118"},VN:{name:"Vietnam",police:"113",fire:"114",ambulance:"115"},PH:{name:"Philippines",police:"911",fire:"911",ambulance:"911"},IN:{name:"India",police:"100",fire:"101",ambulance:"102"},NP:{name:"Nepal",police:"100",fire:"101",ambulance:"102"},AU:{name:"Australia",police:"000",fire:"000",ambulance:"000"},NZ:{name:"New Zealand",police:"111",fire:"111",ambulance:"111"},AE:{name:"UAE",police:"999",fire:"997",ambulance:"998"},TR:{name:"Turkey",police:"155",fire:"110",ambulance:"112"},EG:{name:"Egypt",police:"122",fire:"180",ambulance:"123"},ZA:{name:"South Africa",police:"10111",fire:"10177",ambulance:"10177"},KE:{name:"Kenya",police:"999",fire:"999",ambulance:"999"},MA:{name:"Morocco",police:"19",fire:"15",ambulance:"15"},MN:{name:"Mongolia",police:"102",fire:"101",ambulance:"103"}};
 
 var pending={},reqCounter=0,tripId=null,tripStart=null,tripEnd=null;
-var allVisas=[],detectedCountries=[],detectedAirlines=[],detectedAirlineRaw=[];
+// tripStart/tripEnd above are the *effective* dates (manual override if set,
+// else auto-detected) — used everywhere else in the file. These extra
+// variables exist only for the config panel: to know what was auto-detected
+// (for "Reset to auto-detected") and whether an override is currently active.
+var autoTripStart=null,autoTripEnd=null,tripDatesOverride=null,tripTitle='Trip Research';
+var autoDetectedAirlines=[],airlinesOverride=[];
+var allVisas=[],detectedCountries=[],autoDetectedCountries=[],countriesOverride=[],detectedAirlines=[],detectedAirlineRaw=[];
 var dutyCountries=[],luggageEntries=[];
 
 function invoke(sub,method,body){
@@ -1015,64 +1163,267 @@ window.addEventListener('message',function(e){
   else if(m.type==='trek:error'){var p2=pending[m.requestId];if(p2){delete pending[m.requestId];p2.reject(new Error(m.message||'failed'));}}
 });
 function rh(){window.parent.postMessage({type:'trek:resize',height:Math.max(document.body.scrollHeight+24,400)},'*');}
-
-function switchTab(t){
-  ['overview','visa','holidays','weather','safety','health','culture','connectivity','duty','luggage','emergency'].forEach(function(n){
-    document.getElementById('pane-'+n).classList.toggle('active',n===t);
-    document.getElementById('tab-'+n).classList.toggle('active',n===t);
-  });rh();
+function skeletonRowsHtml(n,widths){
+  var out='';
+  for(var i=0;i<n;i++){var w=(widths&&widths[i])||(i%2?'65%':'90%');out+='<div class="trek-skeleton" style="height:13px;width:'+w+';margin-bottom:8px;border-radius:5px;"></div>';}
+  return out;
+}
+var toastTimer=null;
+function showToast(msg){
+  var el=document.getElementById('trek-toast');
+  if(!el){el=document.createElement('div');el.id='trek-toast';el.className='trek-toast';document.body.appendChild(el);}
+  el.textContent=msg;el.classList.add('trek-toast--visible');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.classList.remove('trek-toast--visible');},5000);
+  rh();
 }
 
-// ══ AI Briefings ══
-var briefingCache={};
-var currentBriefingCountry='',currentBriefingName='',currentBriefingMonth='';
+function switchTab(t){
+  ['overview','visa','holidays','weather','safety','health','culture','connectivity','duty','luggage','emergency','apps'].forEach(function(n){
+    document.getElementById('pane-'+n).classList.toggle('active',n===t);
+    document.getElementById('tab-'+n).classList.toggle('active',n===t);
+  });
+  if(t==='apps')loadTools();
+  rh();
+}
+
+// ══ Apps & Tips ══
+var toolsLoaded=false,toolsData=null,appsActiveCat='';
+var APPS_CAT_META={
+  planning:{icon:'🧭',hue:'#2563eb'},
+  flights:{icon:'✈️',hue:'#0ea5e9'},
+  overland:{icon:'🚌',hue:'#f97316'},
+  insurance:{icon:'🛡️',hue:'#14b8a6'},
+  money:{icon:'💰',hue:'#eab308'},
+  accommodation:{icon:'🏨',hue:'#a855f7'},
+  maps:{icon:'🗺️',hue:'#22c55e'},
+  guides:{icon:'📖',hue:'#e11d48'},
+  safety:{icon:'🚨',hue:'#ef4444'},
+  experiences:{icon:'🎟️',hue:'#ec4899'},
+  connectivity:{icon:'📶',hue:'#06b6d4'},
+  rideshare:{icon:'🚕',hue:'#f59e0b'},
+  communication:{icon:'💬',hue:'#8b5cf6'},
+  'luggage-storage':{icon:'🧳',hue:'#64748b'},
+};
+var extLinkSvg='<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
+
+function loadTools(){
+  if(toolsLoaded)return;
+  toolsLoaded=true;
+  var el=document.getElementById('pane-apps-content');
+  invoke('/tools','GET').then(function(data){
+    if(data.error){el.innerHTML='<div class="status-text error">'+data.error+'</div>';toolsLoaded=false;return;}
+    toolsData=data;
+    renderApps();
+  }).catch(function(e){
+    el.innerHTML='<div class="status-text error">Failed: '+e.message+'</div>';
+    toolsLoaded=false;
+  });
+}
+
+function flagEmoji(cc){
+  if(!cc||cc.length!==2)return '🌐';
+  return cc.toUpperCase().replace(/./g,function(c){return String.fromCodePoint(127397+c.charCodeAt(0));});
+}
+
+function renderTripApps(el,data){
+  var byCode={};
+  (detectedCountries||[]).forEach(function(c){if(data.countryApps[c.countryCode])byCode[c.countryCode]=c;});
+  var codes=Object.keys(byCode);
+  if(!codes.length)return;
+  var head=document.createElement('div');head.className='section-label';head.style.marginTop='0';head.textContent='Must-have apps for your trip';
+  el.appendChild(head);
+  var grid=document.createElement('div');grid.className='apps-country-grid';
+  codes.forEach(function(cc){
+    var apps=data.countryApps[cc];
+    var card=document.createElement('div');card.className='apps-country-card';
+    var head2=document.createElement('div');head2.className='apps-country-head';
+    var flag=document.createElement('span');flag.className='apps-country-flag';flag.textContent=flagEmoji(cc);
+    var name=document.createElement('span');name.className='apps-country-name';name.textContent=COUNTRIES[cc]||byCode[cc].name||cc;
+    head2.appendChild(flag);head2.appendChild(name);
+    card.appendChild(head2);
+    var wrap=document.createElement('div');wrap.className='apps-tool-wrap';
+    apps.forEach(function(app){wrap.appendChild(mkToolPill(app,'apps-tool-pill--country'));});
+    card.appendChild(wrap);
+    grid.appendChild(card);
+  });
+  el.appendChild(grid);
+}
+
+// iOS/Android badges only render when a tool has an explicit ios/android
+// store URL in tips.js — most entries are curated without one, and a
+// hand-hidden store link is better than guessing a search URL that might
+// not point at the right app.
+function mkToolPill(tool,extraClass){
+  var wrap=document.createElement('span');wrap.className='apps-tool-pill'+(extraClass?' '+extraClass:'');
+  var main=document.createElement('button');main.type='button';main.className='apps-tool-main';main.title=tool.description+' — '+tool.url;
+  main.innerHTML=tool.name+' '+extLinkSvg;
+  main.addEventListener('click',function(){window.trek.openExternal(tool.url);});
+  wrap.appendChild(main);
+  if(tool.ios){
+    var ios=document.createElement('button');ios.type='button';ios.className='apps-store-link';ios.textContent='iOS';ios.title='Open on the App Store';
+    ios.addEventListener('click',function(ev){ev.stopPropagation();window.trek.openExternal(tool.ios);});
+    wrap.appendChild(ios);
+  }
+  if(tool.android){
+    var android=document.createElement('button');android.type='button';android.className='apps-store-link';android.textContent='Android';android.title='Open on Google Play';
+    android.addEventListener('click',function(ev){ev.stopPropagation();window.trek.openExternal(tool.android);});
+    wrap.appendChild(android);
+  }
+  return wrap;
+}
+function renderApps(){
+  var el=document.getElementById('pane-apps-content');
+  var data=toolsData;if(!data)return;
+  el.innerHTML='';
+
+  if(data.countryApps)renderTripApps(el,data);
+
+  // Toolbar: search + category filter chips
+  var toolbar=document.createElement('div');toolbar.className='apps-toolbar';
+  var search=document.createElement('input');search.type='text';search.className='apps-search';search.placeholder='Search apps…';search.id='apps-search-input';search.value=appsSearchQuery||'';
+  search.addEventListener('input',function(){appsSearchQuery=search.value;renderAppsGrid();});
+  toolbar.appendChild(search);
+  var chips=document.createElement('div');chips.className='apps-catchips';
+  var allChip=mkCatChip('','All',null);chips.appendChild(allChip);
+  (data.categories||[]).forEach(function(cat){chips.appendChild(mkCatChip(cat.key,cat.label,(APPS_CAT_META[cat.key]||{}).hue));});
+  toolbar.appendChild(chips);
+  el.appendChild(toolbar);
+
+  var gridHolder=document.createElement('div');gridHolder.id='apps-grid-holder';
+  el.appendChild(gridHolder);
+  renderAppsGrid();
+}
+
+function mkCatChip(key,label,hue){
+  var chip=document.createElement('button');chip.type='button';chip.className='apps-catchip'+(appsActiveCat===key?' active':'');
+  if(hue)chip.style.setProperty('--chip-hue',hue);
+  var meta=APPS_CAT_META[key];
+  chip.textContent=(meta?meta.icon+' ':'')+label;
+  chip.addEventListener('click',function(){appsActiveCat=(appsActiveCat===key?'':key);renderApps();});
+  return chip;
+}
+
+var appsSearchQuery='';
+
+function renderAppsGrid(){
+  var holder=document.getElementById('apps-grid-holder');
+  if(!holder)return;
+  holder.innerHTML='';
+  var grid=document.createElement('div');grid.className='apps-cat-grid';
+  var q=(appsSearchQuery||'').trim().toLowerCase();
+  var cats=(toolsData.categories||[]).filter(function(c){return !appsActiveCat||c.key===appsActiveCat;});
+  var anyShown=false;
+  cats.forEach(function(cat){
+    var tools=(cat.tools||[]).filter(function(tool){
+      if(!q)return true;
+      return (tool.name+' '+tool.description).toLowerCase().indexOf(q)>=0;
+    });
+    if(!tools.length)return;
+    anyShown=true;
+    var meta=APPS_CAT_META[cat.key]||{icon:'🌐',hue:null};
+    var c=document.createElement('div');c.className='apps-cat';
+    if(meta.hue)c.style.setProperty('--cat-hue',meta.hue);
+    var head=document.createElement('div');head.className='apps-cat-head';
+    var icon=document.createElement('div');icon.className='apps-cat-icon';icon.textContent=meta.icon;
+    var titleWrap=document.createElement('div');
+    var title=document.createElement('div');title.className='apps-cat-title';title.textContent=cat.label;
+    var count=document.createElement('div');count.className='apps-cat-count';count.textContent=tools.length+(tools.length===1?' tool':' tools');
+    titleWrap.appendChild(title);titleWrap.appendChild(count);
+    head.appendChild(icon);head.appendChild(titleWrap);
+    c.appendChild(head);
+    var wrap=document.createElement('div');wrap.className='apps-tool-wrap';
+    tools.forEach(function(tool){wrap.appendChild(mkToolPill(tool));});
+    c.appendChild(wrap);
+    grid.appendChild(c);
+  });
+  if(!anyShown){
+    var empty=document.createElement('div');empty.className='apps-empty';empty.textContent='No apps match "'+appsSearchQuery+'".';
+    grid.appendChild(empty);
+  }
+  holder.appendChild(grid);
+  rh();
+}
+
+// ══ AI Briefings — multi-country ══
+// Every country added on the Overview tab renders its own block in each of
+// Overview/Safety/Health/Culture/Connectivity, so a multi-country trip never
+// needs to keep switching a single-destination picker back and forth.
+var briefingCountries=[];
 var SECTIONS=['overview','safety','health','culture','connectivity'];
-var currentBriefingData=null;
 
-async function loadBriefings(cc,name){
-  if(!cc)return;
-  currentBriefingCountry=cc;currentBriefingName=name||COUNTRIES[cc]||cc;
+function renderBriefingChips(){
+  var el=document.getElementById('briefing-chips');el.innerHTML='';
+  if(!briefingCountries.length){el.innerHTML='<span class="empty-note">No countries yet — auto-populated from your trip or add manually above.</span>';return;}
+  briefingCountries.forEach(function(cc){
+    var chip=document.createElement('span');chip.className='chip';
+    var lbl=document.createElement('span');lbl.textContent=COUNTRIES[cc]||cc;
+    var btn=document.createElement('button');btn.textContent='×';btn.addEventListener('click',function(){removeBriefingCountry(cc);});
+    chip.appendChild(lbl);chip.appendChild(btn);el.appendChild(chip);
+  });
+}
+async function persistBriefingCountries(next){
+  try{var d=await invoke('/briefing/countries','POST',{tripId:tripId,countries:next});briefingCountries=d.countries||[];renderBriefingChips();loadBriefings();}
+  catch(_e){showToast('Could not save your country selection — please retry.');}
+}
+function addBriefingCountry(cc){if(!cc||briefingCountries.indexOf(cc)!==-1)return;persistBriefingCountries(briefingCountries.concat([cc]));}
+function removeBriefingCountry(cc){persistBriefingCountries(briefingCountries.filter(function(c){return c!==cc;}));}
 
-  function getTarget(s){return document.getElementById('briefing-content-'+s)||document.getElementById('pane-'+s+'-content');}
+async function loadBriefings(){
+  function getTarget(s){return document.getElementById('pane-'+s+'-content');}
+  var countries=briefingCountries;
+  if(!countries.length){
+    SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='<div class="status-text">Add a country in the Overview tab to load data.</div>';});
+    return;
+  }
   SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='<div class="b-skeleton"></div><div class="b-skeleton" style="height:100px;"></div>';});
 
-  try{
-    var data=await invoke('/briefing?country='+encodeURIComponent(cc)+'&section=all','GET');
-    if(data.error){
-      SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='<div class="status-text error">'+data.error+'</div>';});
-      rh();return;
+  var results=await Promise.all(countries.map(function(cc){
+    return invoke('/briefing?country='+encodeURIComponent(cc)+'&section=all','GET')
+      .then(function(data){return {cc:cc,data:data};})
+      .catch(function(e){return {cc:cc,data:{error:e.message}};});
+  }));
+
+  SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='';});
+
+  results.forEach(function(r){
+    var cc=r.cc,data=r.data,name=COUNTRIES[cc]||cc;
+    function section(s){
+      var target=getTarget(s);if(!target)return null;
+      var card=document.createElement('div');card.className='briefing-country-card';
+      var head=document.createElement('div');head.className='briefing-country-cardhead';
+      var titleEl=document.createElement('div');titleEl.className='briefing-country-cardtitle';titleEl.textContent=flagEmoji(cc)+' '+name;
+      var rem=document.createElement('button');rem.className='allowance-remove';rem.textContent='Remove';rem.addEventListener('click',function(){removeBriefingCountry(cc);});
+      head.appendChild(titleEl);head.appendChild(rem);card.appendChild(head);
+      var box=document.createElement('div');box.className='briefing-country-block';card.appendChild(box);
+      target.appendChild(card);
+      return box;
     }
-    var curatedMsg='<div class="status-text">No curated reference data for '+(COUNTRIES[cc]||cc)+' yet.</div>'+
+    if(data.error){
+      SECTIONS.forEach(function(s){var b=section(s);if(b)b.innerHTML='<div class="status-text error">'+data.error+'</div>';});
+      return;
+    }
+    var curatedMsg='<div class="status-text">No curated reference data for '+name+' yet.</div>'+
       (data.availableCountries?'<div class="b-gen-note">Curated destinations available: '+data.availableCountries.map(function(c){return COUNTRIES[c]||c;}).join(', ')+'</div>':'');
 
-    var ot=getTarget('overview');
+    var ot=section('overview');
     if(ot){
       if(data.overview){
-        ot.innerHTML='';renderOverview(ot,data.overview,data.name);
+        renderOverview(ot,data.overview,data.name);
         if(data.transport)renderTransport(ot,data.transport);
         if(data.food)renderFood(ot,data.food);
-        var note=document.createElement('div');note.className='b-gen-note';note.textContent='Curated reference data — always verify current conditions before travel.';ot.appendChild(note);
       } else ot.innerHTML=curatedMsg;
     }
     // Health, Safety, Culture, and Connectivity always render even with no
     // curated destinations.js entry — they're backed (fully or partly) by
     // live sources (traveldoc.aero, GDACS, Wikivoyage, IEC plugs) that don't
     // need curated data.
-    var ht=getTarget('health');if(ht){ht.innerHTML='';renderHealth(ht,data.health||{},cc);}
-    var stt=getTarget('safety');if(stt){stt.innerHTML='';renderSafety(stt,data.safety||{},cc);}
-    var clt=getTarget('culture');if(clt){clt.innerHTML='';renderCulture(clt,data.culture||{},cc);}
-    var cnt=getTarget('connectivity');if(cnt){cnt.innerHTML='';renderConnectivity(cnt,data.connectivity||{});}
-  }catch(e){
-    SECTIONS.forEach(function(s){var t=getTarget(s);if(t)t.innerHTML='<div class="status-text error">Failed: '+e.message+'</div>';});
-  }
+    var ht=section('health');if(ht)renderHealth(ht,data.health||{},cc);
+    var stt=section('safety');if(stt)renderSafety(stt,data.safety||{},cc);
+    var clt=section('culture');if(clt)renderCulture(clt,data.culture||{},cc);
+    var cnt=section('connectivity');if(cnt)renderConnectivity(cnt,data.connectivity||{});
+  });
   rh();
-}
-
-// Keep generateAllBriefings as alias for loadBriefings for any remaining onclick refs
-function generateAllBriefings(){
-  var cc=document.getElementById('val-ai-country').value||currentBriefingCountry;
-  var name=document.getElementById('val-ai-country-name').value||currentBriefingName||COUNTRIES[cc]||cc;
-  loadBriefings(cc,name);
 }
 
 function renderTransport(el,d){
@@ -1278,9 +1629,9 @@ async function loadEtiquette(cc,respectEl,tippingEl){
 function renderCulture(el,d,cc){
   var grid=document.createElement('div');grid.className='briefing-grid';
   var respectCard=bcard('Etiquette & respect','LIVE — WIKIVOYAGE');
-  var respectBody=document.createElement('div');respectBody.className='b-card-body';respectBody.textContent='Loading…';respectCard.appendChild(respectBody);grid.appendChild(respectCard);
+  var respectBody=document.createElement('div');respectBody.className='b-card-body';respectBody.innerHTML=skeletonRowsHtml(3);respectCard.appendChild(respectBody);grid.appendChild(respectCard);
   var tippingCard=bcard('Tipping & service','LIVE — WIKIVOYAGE');
-  var tippingBody=document.createElement('div');tippingBody.className='b-card-body';tippingBody.textContent='Loading…';tippingCard.appendChild(tippingBody);grid.appendChild(tippingCard);
+  var tippingBody=document.createElement('div');tippingBody.className='b-card-body';tippingBody.innerHTML=skeletonRowsHtml(3);tippingCard.appendChild(tippingBody);grid.appendChild(tippingCard);
   if(cc)loadEtiquette(cc,respectBody,tippingBody);
   else{respectBody.textContent='No country selected.';tippingBody.textContent='';}
   if(d.phrases){
@@ -1397,12 +1748,7 @@ function renderHero(data){
       setDD('wx',c.countryCode);
       if(c.name)document.getElementById('wx-city').value=c.name;
       if(dutyCountries.indexOf(c.countryCode)===-1)addDutyCountry(c.countryCode);
-      // Load briefings for clicked country
-      setDD('ai-country',c.countryCode);
-      currentBriefingCountry=c.countryCode;
-      currentBriefingName=COUNTRIES[c.countryCode]||c.countryCode;
-      document.getElementById('val-ai-country-name').value=currentBriefingName;
-      loadBriefings(c.countryCode,currentBriefingName);
+      if(briefingCountries.indexOf(c.countryCode)===-1)addBriefingCountry(c.countryCode);
     });
     pills.appendChild(p);
   });
@@ -1445,12 +1791,8 @@ function setDD(id,code){var d=dropdowns[id];if(!d)return;var n=COUNTRIES[code]||
 initDropdown('passport');initDropdown('dest');
 initDropdown('hol');  // removed auto-click — was firing before dates were filled
 initDropdown('wx');initDropdown('duty-add');
-initDropdown('ai-country',function(code,name){
-  currentBriefingCountry=code;
-  currentBriefingName=name||COUNTRIES[code]||code;
-  document.getElementById('val-ai-country-name').value=currentBriefingName;
-  loadBriefings(code,currentBriefingName);
-});
+initDropdown('ai-country');
+document.getElementById('briefing-add-btn').addEventListener('click',function(){var cc=document.getElementById('val-ai-country').value;if(cc)addBriefingCountry(cc);});
 
 // ══ VISA ══
 function visaBadgeClass(cat){if(!cat)return'visa-other';var c=cat.toLowerCase();if(c.includes('free'))return'visa-free';if(c.includes('arrival'))return'visa-arrival';if(c.includes('e-visa')||c.includes('eta'))return'visa-evisa';if(c.includes('required')||c.includes('admission'))return'visa-required';return'visa-other';}
@@ -1504,6 +1846,36 @@ document.getElementById('visa-btn').addEventListener('click',async function(){
     renderVisas(allVisas);
   }catch(e){document.getElementById('visa-results').innerHTML='<div class="status-text error">'+e.message+'</div>';}
   finally{btn.disabled=false;btn.textContent='Look up';rh();}
+});
+
+// Multi-country visa check — looks up visa requirements for every country
+// currently detected on the trip in one go, instead of one-at-a-time.
+function updateVisaMultiBtn(){
+  var btn=document.getElementById('visa-multi-btn');if(!btn)return;
+  if(detectedCountries.length>1){btn.style.display='inline-block';btn.textContent='Check all '+detectedCountries.length+' trip countries';}
+  else btn.style.display='none';
+}
+document.getElementById('visa-multi-btn').addEventListener('click',async function(){
+  var btn=this,passport=document.getElementById('val-passport').value.trim().toUpperCase();
+  var codes=detectedCountries.map(function(c){return c.countryCode;});
+  if(!passport){document.getElementById('visa-results').innerHTML='<div class="status-text error">Select your passport country first.</div>';return;}
+  if(!codes.length)return;
+  btn.disabled=true;document.getElementById('visa-btn').disabled=true;btn.textContent='Loading…';
+  document.getElementById('visa-results').innerHTML='<div class="status-text">Loading…</div>';
+  document.getElementById('visa-filter-row').style.display='none';
+  try{
+    var results=await Promise.all(codes.map(function(cc){
+      return invoke('/visa?passport='+encodeURIComponent(passport)+'&dest='+encodeURIComponent(cc),'GET')
+        .catch(function(e){return {error:e.message,dest:cc};});
+    }));
+    var failed=results.filter(function(v){return v&&v.error;});
+    allVisas=results.filter(function(v){return v&&!v.error;});
+    if(!allVisas.length){document.getElementById('visa-results').innerHTML='<div class="status-text error">Could not load visa info for any trip country.</div>';return;}
+    if(allVisas.length>1){document.getElementById('visa-filter-row').style.display='flex';document.getElementById('visa-count').textContent=allVisas.length;}
+    renderVisas(allVisas);
+    if(failed.length)showToast('Could not load visa info for '+failed.length+' of '+codes.length+' trip countries.');
+  }catch(e){document.getElementById('visa-results').innerHTML='<div class="status-text error">'+e.message+'</div>';}
+  finally{btn.disabled=false;document.getElementById('visa-btn').disabled=false;updateVisaMultiBtn();rh();}
 });
 
 // ══ HOLIDAYS ══
@@ -1619,6 +1991,7 @@ function renderDutyAllowances(){
         row.appendChild(l);row.appendChild(v);items.appendChild(row);
       });
       if(info.note){var n=document.createElement('div');n.className='a-note';n.textContent=info.note;items.appendChild(n);}
+      var staleNote=document.createElement('div');staleNote.className='a-note';staleNote.textContent='Reference figures, not pulled live — cross-check against the "Free to import" data below before travel.';items.appendChild(staleNote);
       card.appendChild(items);
     }else{
       var na=document.createElement('div');na.className='status-text';na.textContent='No curated allowance data yet — showing live customs data below.';card.appendChild(na);
@@ -1626,7 +1999,7 @@ function renderDutyAllowances(){
 
     var liveWrap=document.createElement('div');liveWrap.className='a-live';
     var liveTitle=document.createElement('div');liveTitle.className='a-live-title';liveTitle.textContent='Free to import — live';
-    var liveBody=document.createElement('div');liveBody.className='allowance-items';liveBody.textContent='Loading…';
+    var liveBody=document.createElement('div');liveBody.className='allowance-items';liveBody.innerHTML=skeletonRowsHtml(2);
     liveWrap.appendChild(liveTitle);liveWrap.appendChild(liveBody);card.appendChild(liveWrap);
 
     el.appendChild(card);
@@ -1655,7 +2028,7 @@ async function loadDutyFreeToImport(cc,targetEl){
   rh();
 }
 async function persistDutyCountries(next){
-  try{var d=await invoke('/duty-free/countries','POST',{tripId:tripId,countries:next});dutyCountries=d.countries||[];renderDutyChips();}catch(_e){}
+  try{var d=await invoke('/duty-free/countries','POST',{tripId:tripId,countries:next});dutyCountries=d.countries||[];renderDutyChips();}catch(_e){showToast('Could not save your customs country selection — please retry.');}
 }
 function addDutyCountry(cc){if(!cc||dutyCountries.indexOf(cc)!==-1)return;persistDutyCountries(dutyCountries.concat([cc]));}
 function removeDutyCountry(cc){persistDutyCountries(dutyCountries.filter(function(c){return c!==cc;}));}
@@ -1678,7 +2051,11 @@ var AIRLINE_CANONICAL_NAMES={
   'Wizz Air Ukraine':AIRLINES['Wizz Air'],
   'All Nippon Airways':AIRLINES['ANA'],
   'Japan Airlines':AIRLINES['JAL'],
-  'easyJet Airline':AIRLINES['easyJet']
+  'easyJet Airline':AIRLINES['easyJet'],
+  'Wizzair':AIRLINES['Wizz Air'],
+  'AIR CHINA':AIRLINES['Air China'],
+  'Delta':AIRLINES['Delta Air Lines'],
+  'Delta Airlines':AIRLINES['Delta Air Lines']
 };
 function getAirlineInfo(name,iata){
   if(!name)return null;
@@ -1686,7 +2063,13 @@ function getAirlineInfo(name,iata){
   if(AIRLINE_CANONICAL_NAMES[name])return AIRLINE_CANONICAL_NAMES[name];
   if(iata&&AIRLINES_BY_IATA[iata])return AIRLINES_BY_IATA[iata];
   var lower=name.toLowerCase();
-  for(var key in AIRLINES){var kl=key.toLowerCase();if(lower.includes(kl)||kl.includes(lower))return AIRLINES[key];}
+  function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+  for(var key in AIRLINES){
+    var kl=key.toLowerCase();
+    var containsKey=new RegExp('\\b'+esc(kl)+'\\b').test(lower);
+    var containsName=new RegExp('\\b'+esc(lower)+'\\b').test(kl);
+    if(containsKey||containsName)return AIRLINES[key];
+  }
   return null;
 }
 var airlineSearchResults=[], selectedAirlineName='', selectedAirlineIata='', detectedAirlineSet=new Set();
@@ -1808,7 +2191,20 @@ function renderLuggageEntries(){
         row.appendChild(l);row.appendChild(v);list.appendChild(row);
       });
       if(info.note){var n=document.createElement('div');n.className='fare-note';n.textContent=info.note;list.appendChild(n);}
+      var staleNote=document.createElement('div');staleNote.className='fare-note';staleNote.textContent='Reference figures, not pulled live — always confirm on the airline\'s own site before departure.';list.appendChild(staleNote);
       card.appendChild(list);
+      if(Array.isArray(info.tiers)&&info.tiers.length){
+        var tierWrap=document.createElement('div');tierWrap.className='fare-tiers';
+        var tierTitle=document.createElement('div');tierTitle.className='fare-tiers-title';tierTitle.textContent='Checked bag by fare type';tierWrap.appendChild(tierTitle);
+        info.tiers.forEach(function(tier){
+          var trow=document.createElement('div');trow.className='l-row';
+          var tl=document.createElement('span');tl.className='l-lbl';tl.textContent=tier.t;
+          var bagWord=tier.b===1?'bag':'bags';
+          var tv=document.createElement('span');tv.className='l-val';tv.textContent=tier.b+' '+bagWord+(tier.b?' × '+tier.kg+' kg':'')+' — '+tier.fee;
+          trow.appendChild(tl);trow.appendChild(tv);tierWrap.appendChild(trow);
+        });
+        card.appendChild(tierWrap);
+      }
     }
     el.appendChild(card);
   });
@@ -1832,7 +2228,7 @@ function renderLuggageSummary(){
   el.appendChild(card);rh();
 }
 async function persistLuggageEntries(next){
-  try{var d=await invoke('/luggage/entries','POST',{tripId:tripId,entries:next});luggageEntries=d.entries||[];renderLuggageEntries();}catch(_e){}
+  try{var d=await invoke('/luggage/entries','POST',{tripId:tripId,entries:next});luggageEntries=d.entries||[];renderLuggageEntries();}catch(_e){showToast('Could not save luggage entries — please retry.');}
 }
 function addLuggageEntry(name,airline,iata){persistLuggageEntries(luggageEntries.concat([{name:name,airline:airline,iata:iata||''}]));}
 function removeLuggageEntry(idx){persistLuggageEntries(luggageEntries.filter(function(_,i){return i!==idx;}));}
@@ -1898,43 +2294,199 @@ async function loadLiveEmergency(cc,card,numbersEl){
   rh();
 }
 
+// ══ Trip settings (config panel) ══
+// Manual overrides for the two things auto-detection gets wrong most often:
+// trip dates (only reservation-derived — misses hotel-only legs) and the
+// detected-airlines list (relies on parsing free-text metadata).
+document.getElementById('hero-config-btn').addEventListener('click',function(){
+  var btn=this;btn.classList.add('spinning');setTimeout(function(){btn.classList.remove('spinning');},500);
+  var panel=document.getElementById('config-panel');
+  var opening=panel.style.display==='none'||!panel.style.display;
+  if(opening){
+    document.getElementById('config-start').value=tripStart||'';
+    document.getElementById('config-end').value=tripEnd||'';
+    document.getElementById('config-dates-note').textContent=(tripDatesOverride&&(tripDatesOverride.startDate||tripDatesOverride.endDate))?'Manually overridden — auto-detected was '+(autoTripStart||'—')+' → '+(autoTripEnd||'—')+'.':'Auto-detected from your trip reservations.';
+    renderConfigCountryChips();
+    renderConfigAirlineChips();
+  }
+  panel.style.display=opening?'block':'none';
+  rh();
+});
+
+function renderConfigCountryChips(){
+  var el=document.getElementById('config-country-chips');el.innerHTML='';
+  document.getElementById('config-countries-note').textContent=countriesOverride.length?'Manually overridden.':'Auto-detected from your trip reservations & places.';
+  if(!detectedCountries.length){el.innerHTML='<span class="empty-note">No countries detected — add one manually below.</span>';return;}
+  detectedCountries.forEach(function(c){
+    var chip=document.createElement('span');chip.className='chip';
+    var lbl=document.createElement('span');lbl.textContent=COUNTRIES[c.countryCode]||c.countryCode;
+    var btn=document.createElement('button');btn.textContent='×';btn.addEventListener('click',function(){
+      persistCountriesOverride(detectedCountries.map(function(x){return x.countryCode;}).filter(function(cc){return cc!==c.countryCode;}));
+    });
+    chip.appendChild(lbl);chip.appendChild(btn);el.appendChild(chip);
+  });
+}
+async function persistCountriesOverride(next){
+  try{
+    var d=await invoke('/settings/countries','POST',{tripId:tripId,countries:next});
+    countriesOverride=d.countries||[];
+    detectedCountries=countriesOverride.length?countriesOverride.map(function(cc){return {countryCode:cc,name:COUNTRIES[cc]||cc};}):autoDetectedCountries.slice();
+    renderConfigCountryChips();renderHero({title:tripTitle,startDate:tripStart,endDate:tripEnd});renderEmergency();updateVisaMultiBtn();
+  }catch(_e){showToast('Could not save country overrides — please retry.');}
+}
+document.getElementById('config-country-add-btn').addEventListener('click',function(){
+  var cc=document.getElementById('val-config-country-add').value;
+  if(!cc)return;
+  var codes=detectedCountries.map(function(x){return x.countryCode;});
+  if(codes.indexOf(cc)===-1)persistCountriesOverride(codes.concat([cc]));
+});
+document.getElementById('config-countries-reset').addEventListener('click',function(){persistCountriesOverride([]);});
+initDropdown('config-country-add');
+
+function renderConfigAirlineChips(){
+  var el=document.getElementById('config-airline-chips');el.innerHTML='';
+  document.getElementById('config-airlines-note').textContent=airlinesOverride.length?'Manually overridden.':'Auto-detected from your flight reservations.';
+  if(!detectedAirlines.length){el.innerHTML='<span class="empty-note">No airlines detected — add one manually below.</span>';return;}
+  detectedAirlines.forEach(function(a){
+    var chip=document.createElement('span');chip.className='chip';
+    var lbl=document.createElement('span');lbl.textContent=a;
+    var btn=document.createElement('button');btn.textContent='×';btn.addEventListener('click',function(){persistAirlinesOverride(detectedAirlines.filter(function(x){return x!==a;}));});
+    chip.appendChild(lbl);chip.appendChild(btn);el.appendChild(chip);
+  });
+}
+var configAirlineDebounce=null;
+function closeConfigAirlineDD(){document.getElementById('config-airline-dd').classList.remove('open');}
+async function loadConfigAirlineSuggestions(query){
+  var dd=document.getElementById('config-airline-dd');
+  try{
+    var data=await invoke('/airlines/search?q='+encodeURIComponent(query),'GET');
+    var airlines=data.airlines||[];
+    dd.innerHTML='';
+    if(!airlines.length){closeConfigAirlineDD();return;}
+    airlines.slice(0,50).forEach(function(a){
+      var opt=document.createElement('div');opt.className='country-opt';
+      opt.innerHTML='<span class="code">'+(a.iata||'')+'</span>'+a.name;
+      opt.addEventListener('mousedown',function(ev){
+        ev.preventDefault();
+        document.getElementById('config-airline-input').value='';
+        closeConfigAirlineDD();
+        if(detectedAirlines.indexOf(a.name)===-1)persistAirlinesOverride(detectedAirlines.concat([a.name]));
+      });
+      dd.appendChild(opt);
+    });
+    dd.classList.add('open');
+  }catch(_e){closeConfigAirlineDD();}
+}
+document.getElementById('config-airline-input').addEventListener('input',function(){
+  clearTimeout(configAirlineDebounce);
+  var q=this.value.trim();
+  configAirlineDebounce=setTimeout(function(){loadConfigAirlineSuggestions(q);},200);
+});
+document.getElementById('config-airline-input').addEventListener('focus',function(){loadConfigAirlineSuggestions(this.value.trim());});
+document.addEventListener('click',function(e){
+  if(!e.target.closest||(!e.target.closest('#config-airline-dd')&&e.target.id!=='config-airline-input'))closeConfigAirlineDD();
+});
+async function persistAirlinesOverride(next){
+  try{
+    var d=await invoke('/settings/airlines','POST',{tripId:tripId,airlines:next});
+    airlinesOverride=d.airlines||[];
+    detectedAirlines=airlinesOverride.length?airlinesOverride.slice():autoDetectedAirlines.slice();
+    detectedAirlineSet=new Set(detectedAirlines);
+    renderConfigAirlineChips();renderHero({title:tripTitle,startDate:tripStart,endDate:tripEnd});
+  }catch(_e){showToast('Could not save airline overrides — please retry.');}
+}
+document.getElementById('config-airline-add').addEventListener('click',function(){
+  var input=document.getElementById('config-airline-input');var name=input.value.trim();
+  if(!name)return;
+  if(detectedAirlines.indexOf(name)===-1)persistAirlinesOverride(detectedAirlines.concat([name]));
+  input.value='';
+});
+// Note: since "no override" and "override with an empty list" look the same
+// (both persist as []), removing every airline chip also reverts to
+// auto-detected rather than leaving a deliberately empty list.
+document.getElementById('config-airlines-reset').addEventListener('click',function(){persistAirlinesOverride([]);});
+
+async function persistTripDates(startDate,endDate){
+  try{
+    var d=await invoke('/settings/trip-dates','POST',{tripId:tripId,startDate:startDate,endDate:endDate});
+    tripDatesOverride=d;
+    tripStart=d.startDate||autoTripStart;tripEnd=d.endDate||autoTripEnd;
+    document.getElementById('hol-start').value=tripStart||'';document.getElementById('hol-end').value=tripEnd||'';
+    document.getElementById('wx-start').value=tripStart||'';document.getElementById('wx-end').value=tripEnd||'';
+    document.getElementById('config-dates-note').textContent=(d.startDate||d.endDate)?'Manually overridden — auto-detected was '+(autoTripStart||'—')+' → '+(autoTripEnd||'—')+'.':'Auto-detected from your trip reservations.';
+    renderHero({title:tripTitle,startDate:tripStart,endDate:tripEnd});
+  }catch(_e){showToast('Could not save trip dates — please retry.');}
+}
+document.getElementById('config-dates-save').addEventListener('click',function(){
+  var s=document.getElementById('config-start').value||null;
+  var e=document.getElementById('config-end').value||null;
+  persistTripDates(s,e);
+});
+document.getElementById('config-dates-reset').addEventListener('click',function(){
+  document.getElementById('config-start').value=autoTripStart||'';
+  document.getElementById('config-end').value=autoTripEnd||'';
+  persistTripDates(null,null);
+});
+
 // ══ Context ══
 async function onContext(ctx){
   if(!ctx.tripId)return;
   tripId=ctx.tripId;
+  var initFailures=[];
 
   // ── 1. Trip context (dates + countries) ───────────────────────────────────
   try{
     var d=await invoke('/trip-context?tripId='+tripId,'GET');
-    tripStart=d.startDate||null;tripEnd=d.endDate||null;
-    if(tripStart){document.getElementById('hol-start').value=tripStart;document.getElementById('wx-start').value=tripStart;}
-    if(tripEnd){document.getElementById('hol-end').value=tripEnd;document.getElementById('wx-end').value=tripEnd;}
-    if(d.detectedCountries&&d.detectedCountries.length){
-      detectedCountries=d.detectedCountries;
-      var first=detectedCountries[0];
-      setDD('dest',first.countryCode);setDD('hol',first.countryCode);setDD('wx',first.countryCode);
-      if(first.name)document.getElementById('wx-city').value=first.name;
-      setDD('ai-country',first.countryCode);
-      currentBriefingCountry=first.countryCode;
-      currentBriefingName=COUNTRIES[first.countryCode]||first.countryCode;
-      document.getElementById('val-ai-country-name').value=currentBriefingName;
-    }
+    autoTripStart=d.startDate||null;autoTripEnd=d.endDate||null;
+    autoDetectedCountries=d.detectedCountries||[];
+  }catch(_e){initFailures.push('trip dates/countries');}
+  // Manual override (config panel) wins over auto-detected trip countries —
+  // detection can mis-tag a layover or miss a leg entirely.
+  try{
+    var cov=await invoke('/settings/countries?tripId='+tripId,'GET');
+    countriesOverride=cov.countries||[];
   }catch(_e){}
+  detectedCountries=countriesOverride.length?countriesOverride.map(function(cc){return {countryCode:cc,name:COUNTRIES[cc]||cc};}):autoDetectedCountries.slice();
+  if(detectedCountries.length){
+    var first=detectedCountries[0];
+    setDD('dest',first.countryCode);setDD('hol',first.countryCode);setDD('wx',first.countryCode);
+    if(first.name)document.getElementById('wx-city').value=first.name;
+    setDD('ai-country',first.countryCode);
+  }
+  updateVisaMultiBtn();
+  if(toolsData)renderApps();
+  // Manual override (config panel) wins over auto-detected trip dates —
+  // auto-detection only looks at reservation metadata and can miss the true
+  // trip span (e.g. a hotel-only leg with no flight/train reservation).
+  try{
+    var ov=await invoke('/settings/trip-dates?tripId='+tripId,'GET');
+    tripDatesOverride=ov;
+  }catch(_e){}
+  tripStart=(tripDatesOverride&&tripDatesOverride.startDate)||autoTripStart;
+  tripEnd=(tripDatesOverride&&tripDatesOverride.endDate)||autoTripEnd;
+  if(tripStart){document.getElementById('hol-start').value=tripStart;document.getElementById('wx-start').value=tripStart;}
+  if(tripEnd){document.getElementById('hol-end').value=tripEnd;document.getElementById('wx-end').value=tripEnd;}
 
   // ── 2. Airlines ────────────────────────────────────────────────────────────
   try{
     var ad=await invoke('/luggage/auto-airlines?tripId='+tripId,'GET');
     if(ad.airlines&&ad.airlines.length){
-      detectedAirlines=ad.airlines.map(function(a){return a.canonical||a.raw||a;});
+      autoDetectedAirlines=ad.airlines.map(function(a){return a.canonical||a.raw||a;});
       detectedAirlineRaw=ad.airlines;
     }
+  }catch(_e){initFailures.push('detected airlines');}
+  try{
+    var aov=await invoke('/settings/airlines?tripId='+tripId,'GET');
+    airlinesOverride=aov.airlines||[];
   }catch(_e){}
+  detectedAirlines=airlinesOverride.length?airlinesOverride.slice():autoDetectedAirlines.slice();
 
   // ── 3. Hero ────────────────────────────────────────────────────────────────
   try{
     var trip=await invoke('/trip-info?tripId='+tripId,'GET');
-    renderHero({title:trip.title,startDate:trip.startDate,endDate:trip.endDate});
-  }catch(_e){}
+    tripTitle=trip.title||'Trip Research';
+    renderHero({title:tripTitle,startDate:tripStart,endDate:tripEnd});
+  }catch(_e){initFailures.push('trip summary');}
 
   detectedAirlineSet=new Set(detectedAirlines);
   initAirlineSearch();
@@ -1949,11 +2501,25 @@ async function onContext(ctx){
       if(dutyCountries.length)await invoke('/duty-free/countries','POST',{tripId:tripId,countries:dutyCountries});
     }
     renderDutyChips();
-  }catch(_e){}
+  }catch(_e){initFailures.push('customs countries');}
+
+  // ── 4b. Briefing countries (Overview/Safety/Health/Culture/Connectivity) ──
+  try{
+    var bd=await invoke('/briefing/countries?tripId='+tripId,'GET');
+    briefingCountries=bd.countries||[];
+    if(!briefingCountries.length&&detectedCountries.length){
+      var seen={};
+      briefingCountries=detectedCountries.map(function(c){return c.countryCode;}).filter(function(cc){if(seen[cc])return false;seen[cc]=true;return true;});
+      if(briefingCountries.length)await invoke('/briefing/countries','POST',{tripId:tripId,countries:briefingCountries});
+    }
+    renderBriefingChips();
+    loadBriefings();
+  }catch(_e){initFailures.push('briefing countries');}
   try{
     var ld=await invoke('/luggage/entries?tripId='+tripId,'GET');
     luggageEntries=ld.entries||[];renderLuggageEntries();
-  }catch(_e){}
+  }catch(_e){initFailures.push('luggage entries');}
+  if(initFailures.length)showToast('Some trip data failed to load ('+initFailures.join(', ')+'). Try reopening the page.');
   rh();
 }
 // trek:ready and resize are handled automatically by the design-kit bootstrap

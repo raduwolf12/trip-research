@@ -30,11 +30,62 @@ async function fetchWithTimeout(url, options, timeoutMs) {
 }
 
 // ── simple in-memory cache ────────────────────────────────────────────────────
+// Per-process only: cleared on every restart/redeploy and not shared across
+// instances if this service is ever scaled horizontally. Fine for a single
+// instance fronting a handful of concurrent trip pages; revisit with a shared
+// store (redis, ctx.meta, etc) if that changes.
 const cache = new Map()
+// In-flight requests for the same key are coalesced so a burst of page loads
+// (e.g. several travelers opening the same trip at once) triggers one upstream
+// fetch instead of one per request.
+const inFlight = new Map()
 function cached(key, ttlMs, fn) {
   const hit = cache.get(key)
   if (hit && Date.now() - hit.at < ttlMs) return Promise.resolve(hit.value)
-  return fn().then((value) => { cache.set(key, { at: Date.now(), value }); return value })
+  if (inFlight.has(key)) return inFlight.get(key)
+  const promise = fn()
+    .then((value) => { cache.set(key, { at: Date.now(), value }); inFlight.delete(key); return value })
+    .catch((err) => { inFlight.delete(key); throw err })
+  inFlight.set(key, promise)
+  return promise
+}
+// Same as `cached`, but on a refresh failure (rate limit, upstream outage)
+// serves the last-known-good value instead of throwing, if one exists — for
+// slow-changing reference datasets (visa rules, airline lists) it's much
+// better to show slightly stale data than to break the whole feature because
+// one refresh got a transient 429/5xx.
+function cachedWithStaleFallback(key, ttlMs, fn) {
+  const hit = cache.get(key)
+  if (hit && Date.now() - hit.at < ttlMs) return Promise.resolve(hit.value)
+  if (inFlight.has(key)) return inFlight.get(key)
+  const promise = fn()
+    .then((value) => { cache.set(key, { at: Date.now(), value }); inFlight.delete(key); return value })
+    .catch((err) => {
+      inFlight.delete(key)
+      if (hit) { console.warn(`[cachedWithStaleFallback] refresh failed for "${key}", serving stale data:`, err?.message || err); return hit.value }
+      throw err
+    })
+  inFlight.set(key, promise)
+  return promise
+}
+// Retries a fetch on 429/502/503/504, honoring Retry-After when present and
+// otherwise backing off exponentially. Network-level failures (timeout, DNS,
+// connection refused) are NOT retried here — each attempt already burns the
+// full timeoutMs, so retrying those multiplies a slow/unreachable host into
+// a request that reliably blows through any reverse-proxy gateway timeout.
+// A prompt HTTP error response is cheap to retry; a hung connection isn't.
+async function fetchWithRetry(url, options, timeoutMs, maxRetries = 2) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetchWithTimeout(url, options, timeoutMs)
+    const retryableStatus = [429, 502, 503, 504].includes(res.status)
+    if (retryableStatus && attempt < maxRetries) {
+      const retryAfterSec = parseInt(res.headers.get('retry-after') || '', 10)
+      const delay = Number.isFinite(retryAfterSec) ? retryAfterSec * 1000 : 1000 * Math.pow(2, attempt)
+      await new Promise((r) => setTimeout(r, delay))
+      continue
+    }
+    return res
+  }
 }
 
 // visalist.io is Cloudflare-protected and blocks both server-side fetches
@@ -47,42 +98,35 @@ const PASSPORT_INDEX_URL_LEGACY = 'https://raw.githubusercontent.com/ilyankou/pa
 const PASSPORT_INDEX_URL = 'https://raw.githubusercontent.com/imorte/passport-index-data/refs/heads/main/passport-index-tidy-iso2.csv'
 
 
-let passportDataCache = null
-let passportDataFetchedAt = 0
 const PASSPORT_CACHE_TTL = 24 * 60 * 60 * 1000
 
 async function getPassportData() {
-  if (passportDataCache && Date.now() - passportDataFetchedAt < PASSPORT_CACHE_TTL) {
-    return passportDataCache
-  }
-  const res = await fetchWithTimeout(PASSPORT_INDEX_URL, {
-    headers: { 'Accept': 'text/plain' },
-  }, 20000)
-  if (!res.ok) throw new Error(`passport-index-dataset returned ${res.status}`)
-  const text = await res.text()
-  const lines = text.split('\n').filter(Boolean)
-  // Build a lookup: { 'DK': { 'JP': '90', 'CN': '30', ... }, ... }
-  const data = {}
-  for (let i = 1; i < lines.length; i++) {
-    const parts = lines[i].split(',')
-    if (parts.length < 3) continue
-    const passport = parts[0].trim().toUpperCase()
-    const dest = parts[1].trim().toUpperCase()
-    const req = parts.slice(2).join(',').trim()
-    if (!data[passport]) data[passport] = {}
-    data[passport][dest] = req
-  }
-  passportDataCache = data
-  passportDataFetchedAt = Date.now()
-  return data
+  return cachedWithStaleFallback('passport-index-dataset', PASSPORT_CACHE_TTL, async () => {
+    const res = await fetchWithRetry(PASSPORT_INDEX_URL, {
+      headers: { 'Accept': 'text/plain' },
+    }, 20000)
+    if (!res.ok) throw new Error(`passport-index-dataset returned ${res.status}`)
+    const text = await res.text()
+    const lines = text.split('\n').filter(Boolean)
+    // Build a lookup: { 'DK': { 'JP': '90', 'CN': '30', ... }, ... }
+    const data = {}
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split(',')
+      if (parts.length < 3) continue
+      const passport = parts[0].trim().toUpperCase()
+      const dest = parts[1].trim().toUpperCase()
+      const req = parts.slice(2).join(',').trim()
+      if (!data[passport]) data[passport] = {}
+      data[passport][dest] = req
+    }
+    return data
+  })
 }
 
 // ── Emergency telephone numbers — fills gaps in the client's curated list ──
 // Unauthenticated GitHub Gist raw file, no CORS/WAF issues.
 const EMERGENCY_NUMBERS_URL = 'https://gist.githubusercontent.com/immujahidkhan/58c2e7402ad1df43ac4e03d025d7fed5/raw/9cf238b0fd71e7184970678b0b82e0252336ddd0/List-Of-Emergency-Telephone-Numbers'
 
-let emergencyDataCache = null
-let emergencyDataFetchedAt = 0
 const EMERGENCY_CACHE_TTL = 24 * 60 * 60 * 1000
 
 function joinNumbers(all) {
@@ -92,30 +136,27 @@ function joinNumbers(all) {
 }
 
 async function getEmergencyData() {
-  if (emergencyDataCache && Date.now() - emergencyDataFetchedAt < EMERGENCY_CACHE_TTL) {
-    return emergencyDataCache
-  }
-  const res = await fetchWithTimeout(EMERGENCY_NUMBERS_URL, { headers: { Accept: 'application/json' } }, 20000)
-  if (!res.ok) throw new Error(`Emergency numbers gist returned ${res.status}`)
-  const list = await res.json()
-  const byCountry = {}
-  for (const entry of list) {
-    const code = entry?.Country?.ISOCode?.toUpperCase()
-    if (!code) continue
-    byCountry[code] = {
-      name: entry.Country.Name,
-      police: joinNumbers(entry.Police?.All),
-      fire: joinNumbers(entry.Fire?.All),
-      ambulance: joinNumbers(entry.Ambulance?.All),
-      dispatch: joinNumbers(entry.Dispatch?.All),
-      member112: !!entry.Member_112,
-      localOnly: !!entry.LocalOnly,
-      notes: entry.Notes || null,
+  return cachedWithStaleFallback('emergency-numbers-gist', EMERGENCY_CACHE_TTL, async () => {
+    const res = await fetchWithRetry(EMERGENCY_NUMBERS_URL, { headers: { Accept: 'application/json' } }, 20000)
+    if (!res.ok) throw new Error(`Emergency numbers gist returned ${res.status}`)
+    const list = await res.json()
+    const byCountry = {}
+    for (const entry of list) {
+      const code = entry?.Country?.ISOCode?.toUpperCase()
+      if (!code) continue
+      byCountry[code] = {
+        name: entry.Country.Name,
+        police: joinNumbers(entry.Police?.All),
+        fire: joinNumbers(entry.Fire?.All),
+        ambulance: joinNumbers(entry.Ambulance?.All),
+        dispatch: joinNumbers(entry.Dispatch?.All),
+        member112: !!entry.Member_112,
+        localOnly: !!entry.LocalOnly,
+        notes: entry.Notes || null,
+      }
     }
-  }
-  emergencyDataCache = byCountry
-  emergencyDataFetchedAt = Date.now()
-  return byCountry
+    return byCountry
+  })
 }
 
 function interpretRequirement(req) {
@@ -239,33 +280,70 @@ function wmoDescription(code) {
   return 'Unknown'
 }
 
-// ── Nominatim geocode ─────────────────────────────────────────────────────────
-async function geocodeCity(city, countryCode) {
-  const params = new URLSearchParams({ q: city, format: 'json', limit: '1' })
-  if (countryCode) params.set('countrycodes', countryCode.toLowerCase())
-  const res = await fetchWithTimeout(
-    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+// ── Nominatim throttling ──────────────────────────────────────────────────────
+// Nominatim's usage policy caps unauthenticated callers at 1 request/second.
+// Trip-context detection can fire several geocode/reverse-geocode calls back
+// to back (one per leg/destination), so without serializing them a burst
+// trips a 429 — this queue spaces every outbound Nominatim call at least
+// NOMINATIM_MIN_INTERVAL_MS apart, and retries once on a 429 response.
+const NOMINATIM_MIN_INTERVAL_MS = 1100
+let nominatimQueue = Promise.resolve()
+function throttleNominatim(fn) {
+  const run = nominatimQueue.then(async () => {
+    try { return await fn() }
+    finally { await new Promise((r) => setTimeout(r, NOMINATIM_MIN_INTERVAL_MS)) }
+  })
+  nominatimQueue = run.catch(() => {})
+  return run
+}
+async function fetchNominatim(url) {
+  const attempt = () => fetchWithTimeout(
+    url,
     { headers: { 'User-Agent': 'TREK-trip-research-plugin/0.6.0 (self-hosted, personal use)' } },
     10000
   )
-  if (!res.ok) throw new Error(`Nominatim returned ${res.status}`)
-  const results = await res.json()
-  if (!results.length) return null
-  return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) }
+  return throttleNominatim(async () => {
+    let res = await attempt()
+    if (res.status === 429) {
+      const retryAfterSec = parseInt(res.headers.get('retry-after') || '', 10)
+      await new Promise((r) => setTimeout(r, Number.isFinite(retryAfterSec) ? retryAfterSec * 1000 : 2000))
+      res = await attempt()
+    }
+    return res
+  })
 }
 
+// ── Nominatim geocode ─────────────────────────────────────────────────────────
+// Cached here (not just at call sites) so every caller — trip-context's
+// per-leg/per-place lookups included — shares one cache and skips both the
+// network round-trip and the throttle delay on a repeat lookup within a
+// single request or across requests.
+async function geocodeCity(city, countryCode) {
+  const key = `geo:${city.toLowerCase()}:${(countryCode || '').toLowerCase()}`
+  return cached(key, 7 * 24 * 60 * 60 * 1000, async () => {
+    const params = new URLSearchParams({ q: city, format: 'json', limit: '1' })
+    if (countryCode) params.set('countrycodes', countryCode.toLowerCase())
+    const res = await fetchNominatim(`https://nominatim.openstreetmap.org/search?${params.toString()}`)
+    if (!res.ok) throw new Error(`Nominatim returned ${res.status}`)
+    const results = await res.json()
+    if (!results.length) return null
+    return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) }
+  })
+}
 
 // ── Nominatim reverse geocode lat/lon → country code ─────────────────────────
+// Rounded to ~1km precision for the cache key — country borders don't need
+// more precision than that, and it lets nearby places within the same trip
+// (or across trips) share a cache entry instead of each triggering a call.
 async function reverseGeocodeCountry(lat, lon) {
-  const params = new URLSearchParams({ lat: String(lat), lon: String(lon), format: 'json', zoom: '3' })
-  const res = await fetchWithTimeout(
-    `https://nominatim.openstreetmap.org/reverse?${params.toString()}`,
-    { headers: { 'User-Agent': 'TREK-trip-research-plugin/0.5.0 (self-hosted, personal use)' } },
-    10000
-  )
-  if (!res.ok) return null
-  const data = await res.json()
-  return data?.address?.country_code?.toUpperCase() || null
+  const key = `rgeo:${lat.toFixed(2)}:${lon.toFixed(2)}`
+  return cached(key, 30 * 24 * 60 * 60 * 1000, async () => {
+    const params = new URLSearchParams({ lat: String(lat), lon: String(lon), format: 'json', zoom: '3' })
+    const res = await fetchNominatim(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`)
+    if (!res.ok) return null
+    const data = await res.json()
+    return data?.address?.country_code?.toUpperCase() || null
+  })
 }
 
 // ── IATA airport code → ISO2 country code ────────────────────────────────────
@@ -613,7 +691,10 @@ function parseHeadingCategories(sectionHtml, headingTag) {
 // each with its own h5 category subheadings underneath.
 function extractFreeToImportSection(html) {
   const start = html.match(/<h3[^>]*>\s*Free to Import\s*<\/h3>/i)
-  if (!start) return null
+  if (!start) {
+    console.warn('[traveldoc] "Free to Import" h3 not found — page markup may have changed')
+    return null
+  }
   const rest = html.slice(start.index + start[0].length)
   const end = rest.match(/<h3[^>]*>/i)
   const sectionHtml = end ? rest.slice(0, end.index) : rest
@@ -627,10 +708,12 @@ function extractFreeToImportSection(html) {
       const categories = parseHeadingCategories(m[2], 'h5')
       if (context && categories.length) groups.push({ context, categories })
     }
+    if (!groups.length) console.warn('[traveldoc] Free to Import section found but no h4/h5 categories parsed — page markup may have changed')
     return groups.length ? { groups } : null
   }
 
   const categories = parseHeadingCategories(sectionHtml, 'h4')
+  if (!categories.length) console.warn('[traveldoc] Free to Import section found but no h4 categories parsed — page markup may have changed')
   return categories.length ? { groups: [{ context: null, categories }] } : null
 }
 
@@ -679,53 +762,59 @@ function overridePower(countryCode, fallbackPower) {
 // Format: id,name,alias,iata,icao,callsign,country,active
 // Fetched once and cached in memory — ~100KB, parses in <10ms.
 const OPENFLIGHTS_URL = 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat'
-let airlinesCache = null
-let airlinesFetchedAt = 0
 
 async function getAirlinesList() {
-  if (airlinesCache && Date.now() - airlinesFetchedAt < 24 * 60 * 60 * 1000) return airlinesCache
-  const res = await fetchWithTimeout(OPENFLIGHTS_URL, { headers: { 'Accept': 'text/plain' } }, 15000)
-  if (!res.ok) throw new Error(`OpenFlights returned ${res.status}`)
-  const text = await res.text()
-  const airlines = []
-  const seen = new Set()
-  for (const line of text.split('\n')) {
-    if (!line.trim()) continue
-    const parts = line.split(',')
-    if (parts.length < 8) continue
-    const name     = parts[1].replace(/^"|"$/g, '').trim()
-    const alias    = parts[2].replace(/^"|"$/g, '').trim()
-    const iata     = parts[3].replace(/^"|"$/g, '').trim()
-    const icao     = parts[4].replace(/^"|"$/g, '').trim()
-    const callsign = parts[5].replace(/^"|"$/g, '').trim()
-    const country  = parts[6].replace(/^"|"$/g, '').trim()
-    const active   = parts[7].replace(/^"|"$/g, '').trim()
-    if (active !== 'Y') continue
-    if (!iata || iata === '\\N' || iata === '-') continue
-    if (!name || name === '\\N') continue
-    if (seen.has(iata)) continue
-    seen.add(iata)
-    // Searchable string includes alias + callsign so "SAS" finds "Scandinavian Airlines System"
-    const searchable = [name, alias, callsign, iata, icao]
-      .filter((s) => s && s !== '\\N' && s.length > 1)
-      .join(' ').toLowerCase()
-    airlines.push({
-      name,
-      alias: alias !== '\\N' ? alias : null,
-      iata,
-      callsign: callsign !== '\\N' ? callsign : null,
-      country,
-      searchable
-    })
-  }
-  airlines.sort((a, b) => a.name.localeCompare(b.name))
-  airlinesCache = airlines
-  airlinesFetchedAt = Date.now()
-  return airlines
+  return cachedWithStaleFallback('openflights-airlines', 24 * 60 * 60 * 1000, async () => {
+    const res = await fetchWithRetry(OPENFLIGHTS_URL, { headers: { 'Accept': 'text/plain' } }, 15000)
+    if (!res.ok) throw new Error(`OpenFlights returned ${res.status}`)
+    const text = await res.text()
+    const airlines = []
+    const seen = new Set()
+    for (const line of text.split('\n')) {
+      if (!line.trim()) continue
+      const parts = line.split(',')
+      if (parts.length < 8) continue
+      const name     = parts[1].replace(/^"|"$/g, '').trim()
+      const alias    = parts[2].replace(/^"|"$/g, '').trim()
+      const iata     = parts[3].replace(/^"|"$/g, '').trim()
+      const icao     = parts[4].replace(/^"|"$/g, '').trim()
+      const callsign = parts[5].replace(/^"|"$/g, '').trim()
+      const country  = parts[6].replace(/^"|"$/g, '').trim()
+      const active   = parts[7].replace(/^"|"$/g, '').trim()
+      if (active !== 'Y') continue
+      if (!iata || iata === '\\N' || iata === '-') continue
+      if (!name || name === '\\N') continue
+      if (seen.has(iata)) continue
+      seen.add(iata)
+      // Searchable string includes alias + callsign so "SAS" finds "Scandinavian Airlines System"
+      const searchable = [name, alias, callsign, iata, icao]
+        .filter((s) => s && s !== '\\N' && s.length > 1)
+        .join(' ').toLowerCase()
+      airlines.push({
+        name,
+        alias: alias !== '\\N' ? alias : null,
+        iata,
+        callsign: callsign !== '\\N' ? callsign : null,
+        country,
+        searchable
+      })
+    }
+    airlines.sort((a, b) => a.name.localeCompare(b.name))
+    return airlines
+  })
 }
 
 module.exports = definePlugin({
-  async onLoad(ctx) { ctx.log.info('trip-research plugin loaded') },
+  async onLoad(ctx) {
+    ctx.log.info('trip-research plugin loaded')
+    // Best-effort cache warmup: fires once at process start so the first real
+    // user request doesn't have to win a race against a cold cache + a
+    // possibly rate-limited upstream. If this fails, requests fall back to
+    // the normal on-demand fetch (with its own retry/stale-cache handling)
+    // — this is purely an optimization, never awaited or required to succeed.
+    getPassportData().catch((e) => ctx.log.warn(`passport data warmup failed: ${e?.message || e}`))
+    getAirlinesList().catch((e) => ctx.log.warn(`airlines list warmup failed: ${e?.message || e}`))
+  },
 
   routes: [
     // ── debug: inspect raw trip data shape ───────────────────────────────────
@@ -780,6 +869,13 @@ module.exports = definePlugin({
 
           const seen = new Set()
           const detectedCountries = []
+          // Nominatim calls are throttled to ~1/sec (see throttleNominatim);
+          // repeat lookups are cached and skip the throttle, but a trip with
+          // many distinct uncached places/legs could still stall the request
+          // past a reverse-proxy timeout. Cap live lookups per request so we
+          // always return promptly — remaining countries just won't be
+          // detected until a later request warms the cache for them.
+          let liveGeoCallsLeft = 8
 
           // 3.3.0: getPlaces SQL bug fixed — use actual place coordinates first
           try {
@@ -787,6 +883,8 @@ module.exports = definePlugin({
             const arr = Array.isArray(raw) ? raw : (raw?.data || raw?.places || [])
             for (const p of arr) {
               if (p.lat == null || p.lng == null) continue
+              if (liveGeoCallsLeft <= 0) break
+              liveGeoCallsLeft--
               const cc = await reverseGeocodeCountry(p.lat, p.lng)
               if (cc && !seen.has(cc)) {
                 seen.add(cc)
@@ -815,7 +913,8 @@ module.exports = definePlugin({
             if (meta?.legs && Array.isArray(meta.legs)) {
               for (const leg of meta.legs) {
                 const dest = leg.to || (leg.to && typeof leg.to === 'object' ? leg.to.name : null)
-                if (dest && typeof dest === 'string' && dest.length > 2) {
+                if (dest && typeof dest === 'string' && dest.length > 2 && liveGeoCallsLeft > 0) {
+                  liveGeoCallsLeft--
                   try {
                     const geo = await geocodeCity(dest, '')
                     if (geo) {
@@ -830,7 +929,8 @@ module.exports = definePlugin({
             }
 
             // Strategy 3: location string — geocode the full address
-            if (r.location && typeof r.location === 'string' && r.location.length > 5) {
+            if (r.location && typeof r.location === 'string' && r.location.length > 5 && liveGeoCallsLeft > 0) {
+              liveGeoCallsLeft--
               try {
                 // The location string often ends with ", Country" — extract last part
                 const parts = r.location.split(',').map((p) => p.trim()).filter(Boolean)
@@ -973,11 +1073,7 @@ module.exports = definePlugin({
           if (latParam != null && lonParam != null) {
             geo = { lat: latParam, lon: lonParam }
           } else {
-            geo = await cached(
-              `geo:${city}:${countryCode}`,
-              7 * 24 * 60 * 60 * 1000,
-              () => geocodeCity(city, countryCode || 'world')
-            )
+            geo = await geocodeCity(city, countryCode || 'world')
           }
           if (!geo) return { error: `Could not geocode "${city}"` }
 
@@ -1058,6 +1154,155 @@ module.exports = definePlugin({
           const clean = [...new Set(countries.map((c) => String(c).toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))]
           await ctx.meta.set('trip', tripId, 'duty_free_countries', JSON.stringify(clean))
           return { countries: clean }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── briefing: per-trip country list stored in meta ───────────────────────
+    // Drives Overview/Safety/Health/Culture/Connectivity — same shape as
+    // duty-free/countries above so a multi-country trip only has to add each
+    // country once instead of re-selecting it per tab.
+    {
+      method: 'GET',
+      path: '/briefing/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'briefing_countries')
+          const countries = row ? JSON.parse(typeof row === 'string' ? row : row.value) : []
+          return { countries: Array.isArray(countries) ? countries : [] }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/briefing/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        const countries = Array.isArray(req.body?.countries) ? req.body.countries : []
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const clean = [...new Set(countries.map((c) => String(c).toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))]
+          await ctx.meta.set('trip', tripId, 'briefing_countries', JSON.stringify(clean))
+          return { countries: clean }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── settings: manual override for auto-detected trip countries ───────────
+    // /trip-context detects countries from reservations/places/geocoding,
+    // which can mis-tag a leg (e.g. a layover airport) or miss one entirely.
+    // This lets the config panel pin the exact country list instead; an
+    // empty override falls back to whatever /trip-context auto-detected.
+    {
+      method: 'GET',
+      path: '/settings/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'countries_override')
+          const countries = row ? JSON.parse(typeof row === 'string' ? row : row.value) : []
+          return { countries: Array.isArray(countries) ? countries : [] }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/settings/countries',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        const countries = Array.isArray(req.body?.countries) ? req.body.countries : []
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const clean = [...new Set(countries.map((c) => String(c).toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))]
+          await ctx.meta.set('trip', tripId, 'countries_override', JSON.stringify(clean))
+          return { countries: clean }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── settings: manual override for auto-detected trip dates ───────────────
+    // Auto-detection (see /trip-context) only looks at reservation metadata,
+    // which misses trips whose true start/end isn't reflected in any single
+    // reservation (e.g. a hotel-only leg). This lets the client's config
+    // panel pin exact dates instead. Empty/absent override falls back to
+    // whatever the client passes as the auto-detected value.
+    {
+      method: 'GET',
+      path: '/settings/trip-dates',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'trip_dates_override')
+          const val = row ? JSON.parse(typeof row === 'string' ? row : row.value) : null
+          return { startDate: val?.startDate || null, endDate: val?.endDate || null }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/settings/trip-dates',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
+        const startDate = isDate(req.body?.startDate) ? req.body.startDate : null
+        const endDate = isDate(req.body?.endDate) ? req.body.endDate : null
+        const result = await tryAttempt(async () => {
+          await ctx.meta.set('trip', tripId, 'trip_dates_override', JSON.stringify({ startDate, endDate }))
+          return { startDate, endDate }
+        })
+        return safeJson(200, result)
+      },
+    },
+
+    // ── settings: manual override for auto-detected airlines ─────────────────
+    // /luggage/auto-airlines parses free-text reservation metadata and can
+    // mis-parse or miss an airline; this lets the config panel correct it.
+    // An empty override list is indistinguishable from "no override" (both
+    // fall back to auto-detected) — documented client-side.
+    {
+      method: 'GET',
+      path: '/settings/airlines',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.query.tripId)
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const row = await ctx.meta.get('trip', tripId, 'airlines_override')
+          const airlines = row ? JSON.parse(typeof row === 'string' ? row : row.value) : []
+          return { airlines: Array.isArray(airlines) ? airlines : [] }
+        })
+        return safeJson(200, result)
+      },
+    },
+    {
+      method: 'POST',
+      path: '/settings/airlines',
+      auth: true,
+      async handler(req, ctx) {
+        const tripId = Number(req.body?.tripId)
+        const airlines = Array.isArray(req.body?.airlines) ? req.body.airlines : []
+        if (!tripId) return safeJson(200, { error: 'tripId required' })
+        const result = await tryAttempt(async () => {
+          const clean = [...new Set(airlines.map((a) => String(a).slice(0, 80).trim()).filter(Boolean))].slice(0, 30)
+          await ctx.meta.set('trip', tripId, 'airlines_override', JSON.stringify(clean))
+          return { airlines: clean }
         })
         return safeJson(200, result)
       },
@@ -1315,5 +1560,24 @@ module.exports = definePlugin({
       },
     },
 
+    // ── apps: curated travel tools list ───────────────────────────────────────
+    // Static reference data (server/tips.js) — no live fetch, so it's just
+    // returned as-is for the client's "Apps" tab.
+    {
+      method: 'GET',
+      path: '/tools',
+      auth: true,
+      async handler(req, ctx) {
+        const { TOOL_CATEGORIES, COUNTRY_APPS } = require('./tips.js')
+        return safeJson(200, { categories: TOOL_CATEGORIES, countryApps: COUNTRY_APPS })
+      },
+    },
+
   ],
 })
+
+// Exposed only so tests (test/parsers.test.js) can exercise the pure HTML
+// parsing helpers directly, without spinning up the plugin runtime. The TREK
+// loader only reads the properties definePlugin() itself defines, so this
+// extra property is inert in production.
+module.exports._testUtils = { traveldocHtmlToLines, stripHtmlToText, parseHeadingCategories, extractFreeToImportSection }
